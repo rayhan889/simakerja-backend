@@ -1,0 +1,23 @@
+services:
+  postgresdb:
+    container_name: simakerja-postgres
+    image: postgres:latest
+    restart: unless-stopped
+    networks:
+      - postgresdb
+    volumes:
+      - postgresdb:/data/postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+
+volumes:
+  postgresdb:
+
+networks:
+  postgresdb:
+    driver: bridge
