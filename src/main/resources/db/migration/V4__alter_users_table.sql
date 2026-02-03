@@ -1,0 +1,15 @@
+ALTER TABLE users
+    ADD created_at TIMESTAMP WITHOUT TIME ZONE;
+
+ALTER TABLE users
+    ADD status VARCHAR(20);
+
+ALTER TABLE users
+    ALTER COLUMN created_at SET NOT NULL;
+
+ALTER TABLE users
+    ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE users
+DROP
+COLUMN password_hash;
