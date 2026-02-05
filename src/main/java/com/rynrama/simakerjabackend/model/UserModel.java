@@ -1,8 +1,13 @@
 package com.rynrama.simakerjabackend.model;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.jspecify.annotations.NonNull;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -24,71 +29,37 @@ public class UserModel {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false, name = "password_hash")
-    private String passwordHash;
-
-    @Column(nullable = false, name = "full_name")
+    @Column(name = "full_name", nullable = false)
     private String fullName;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, nullable = false)
     private UserRole role;
 
-    public UserModel(String email, String passwordHash, String fullName, String phoneNumber, UserRole role) {
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-    }
+    @Column(length = 20, nullable = false)
+    private String status = "active";
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
 
     public UserModel() {
     }
 
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
+    public UserModel(UUID id, String email, String fullName, String phoneNumber, UserRole role, String status, Instant createdAt) {
+        this.id = id;
         this.email = email;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+        this.status = status;
+        this.createdAt = createdAt;
     }
 
     public UUID getId() {
@@ -99,15 +70,52 @@ public class UserModel {
         this.id = id;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        UserModel userModel = (UserModel) o;
-        return Objects.equals(id, userModel.id) && Objects.equals(email, userModel.email) && Objects.equals(passwordHash, userModel.passwordHash) && Objects.equals(fullName, userModel.fullName) && Objects.equals(phoneNumber, userModel.phoneNumber) && role == userModel.role;
+    public String getEmail() {
+        return email;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, email, passwordHash, fullName, phoneNumber, role);
+    public void setEmail(String email) {
+        this.email = email;
     }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
 }
