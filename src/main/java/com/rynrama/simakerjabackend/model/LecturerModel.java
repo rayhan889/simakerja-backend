@@ -39,7 +39,7 @@ public class LecturerModel {
     @Column(unique = true, length = 20)
     private String nip;
 
-    @Column(name = "study_program", nullable = false)
+    @Column(name = "study_program")
     private String studyProgram;
 
     @Column(name = "is_adhoc")
