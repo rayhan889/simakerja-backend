@@ -1,6 +1,5 @@
 package com.rynrama.simakerjabackend.model;
 
-import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -21,7 +20,7 @@ import java.util.UUID;
                 )
         }
 )
-public class UserOauthIdentitiesModel {
+public class OauthIdentityModel {
 
     @Id
     @UuidGenerator
@@ -50,10 +49,10 @@ public class UserOauthIdentitiesModel {
     private Instant createdAt;
 
 
-    public UserOauthIdentitiesModel() {
+    public OauthIdentityModel() {
     }
 
-    public UserOauthIdentitiesModel(UUID id, UserModel user, String provider, String providerUserId, String providerEmail, Instant createdAt) {
+    public OauthIdentityModel(UUID id, UserModel user, String provider, String providerUserId, String providerEmail, Instant createdAt) {
         this.id = id;
         this.user = user;
         this.provider = provider;

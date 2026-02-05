@@ -2,7 +2,6 @@ package com.rynrama.simakerjabackend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -16,10 +15,17 @@ public class SecurityConfig {
         return http
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/").permitAll();
-                    auth.anyRequest().authenticated();
+                    auth.requestMatchers("/api/v1/**").authenticated();
+                    auth.anyRequest().permitAll();
                 })
-                .oauth2Login(Customizer.withDefaults())
-                .formLogin(Customizer.withDefaults())
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authz -> authz
+                                .baseUri("/oauth2/authorization")
+                        )
+                        .redirectionEndpoint(redir -> redir
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                )
                 .build();
     }
 }
