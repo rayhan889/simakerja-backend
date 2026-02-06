@@ -1,4 +1,4 @@
-package com.rynrama.simakerjabackend.config;
+package com.rynrama.simakerjabackend.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

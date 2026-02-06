@@ -1,4 +1,4 @@
-package com.rynrama.simakerjabackend.config;
+package com.rynrama.simakerjabackend.config.security;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
