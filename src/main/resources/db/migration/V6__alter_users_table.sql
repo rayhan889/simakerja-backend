@@ -1,0 +1,5 @@
+ALTER TABLE students
+    ALTER COLUMN nim DROP NOT NULL;
+
+ALTER TABLE students
+    ALTER COLUMN study_program DROP NOT NULL;

@@ -1,23 +1,43 @@
 services:
   postgresdb:
-    container_name: simakerja-postgres
-    image: postgres:latest
+    image: postgres:16.2
     restart: unless-stopped
     networks:
-      - postgresdb
+      - simakerja_net
     volumes:
-      - postgresdb:/data/postgres
+      - simakerja_postgres_data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /data/postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2
+    restart: unless-stopped
+    networks:
+      - simakerja_net
+    volumes:
+      - simakerja_redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgresdb:
+  simakerja_postgres_data:
+  simakerja_redis_data:
 
 networks:
-  postgresdb:
+  simakerja_net:
     driver: bridge

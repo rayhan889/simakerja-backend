@@ -31,10 +31,10 @@ public class StudentModel {
     )
     private UserModel user;
 
-    @Column(unique = true, nullable = false, length = 12)
+    @Column(unique = true, length = 12)
     private String nim;
 
-    @Column(name = "study_program", nullable = false)
+    @Column(name = "study_program")
     private String studyProgram;
 
     public StudentModel() {

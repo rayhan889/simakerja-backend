@@ -1,9 +1,9 @@
 package com.rynrama.simakerjabackend.service;
 
-import com.rynrama.simakerjabackend.model.OauthIdentityModel;
-import com.rynrama.simakerjabackend.model.UserModel;
-import com.rynrama.simakerjabackend.model.UserRole;
+import com.rynrama.simakerjabackend.model.*;
+import com.rynrama.simakerjabackend.repository.LecturerRepository;
 import com.rynrama.simakerjabackend.repository.OAuthIdentityRepository;
+import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +22,20 @@ public class OAuth2UserService extends OidcUserService {
     private static final Logger log = LoggerFactory.getLogger(OAuth2UserService.class);
     private final UserRepository userRepository;
     private final OAuthIdentityRepository oauthIdentityRepository;
+    private final LecturerRepository lecturerRepository;
+    private final StudentRepository studentRepository;
 
 
-    public OAuth2UserService(UserRepository userRepository, OAuthIdentityRepository oauthIdentityRepository) {
+    public OAuth2UserService(
+            UserRepository userRepository,
+            OAuthIdentityRepository oauthIdentityRepository,
+            LecturerRepository lecturerRepository,
+            StudentRepository studentRepository
+    ) {
         this.userRepository = userRepository;
         this.oauthIdentityRepository = oauthIdentityRepository;
+        this.lecturerRepository = lecturerRepository;
+        this.studentRepository = studentRepository;
     }
 
     @Override
@@ -50,19 +59,31 @@ public class OAuth2UserService extends OidcUserService {
     }
 
     private OauthIdentityModel createUser(OidcUser oidcUser){
-//        UserModel creation
+//        user(student or lecturer) creation
         UserModel user = new UserModel();
         user.setEmail(oidcUser.getEmail());
         user.setFullName(oidcUser.getFullName());
-//        check whether user is a student or lecturer
-        if (!isMhs(oidcUser)){
+        user.setCreatedAt(Instant.now());
+
+        if (!isMhs(oidcUser)) {
             user.setRole(UserRole.lecturer);
         } else {
             user.setRole(UserRole.student);
         }
-        user.setCreatedAt(Instant.now());
 
         userRepository.save(user);
+
+        if (user.getRole() == UserRole.lecturer) {
+            LecturerModel lecturer = new LecturerModel();
+            lecturer.setUser(user);
+
+            lecturerRepository.save(lecturer);
+        } else {
+            StudentModel student = new StudentModel();
+            student.setUser(user);
+
+            studentRepository.save(student);
+        }
 
 //        OAuthIdentityModel creation
         OauthIdentityModel identity = new OauthIdentityModel();
