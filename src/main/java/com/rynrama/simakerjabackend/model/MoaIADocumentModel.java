@@ -25,6 +25,7 @@ public class MoaIADocumentModel {
     )
     private SubmissionModel submission;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "document_type", nullable = false)
     private MoAIADocumentType documentType;
 
@@ -43,6 +44,7 @@ public class MoaIADocumentModel {
     @Column(name = "partner_representative_position", nullable = false)
     private String partnerRepresentativePosition;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "document_activity", nullable = false)
     private DocumentActivityType activityType;
 
@@ -139,5 +141,13 @@ public class MoaIADocumentModel {
 
     public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
         this.studentSnapshot = studentSnapshot;
+    }
+
+    public SubmissionModel getSubmission() {
+        return submission;
+    }
+
+    public void setSubmission(SubmissionModel submission) {
+        this.submission = submission;
     }
 }
