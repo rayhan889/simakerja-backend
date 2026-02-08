@@ -30,9 +30,8 @@ public class SecurityConfig {
                                 .baseUri("/login/oauth2/code/*")
                         )
                 )
-                .csrf(csrf -> csrf.csrfTokenRepository(
-                        CookieCsrfTokenRepository.withHttpOnlyFalse()
-                ))
+                // Disable CSRF for development purposes
+                .csrf(csrf -> csrf.disable())
                 .headers((headers) ->
                         headers
                                 .contentSecurityPolicy(csp -> csp

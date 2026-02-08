@@ -1,66 +1,53 @@
-package com.rynrama.simakerjabackend.model;
+package com.rynrama.simakerjabackend.dto;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.type.SqlTypes;
+import com.rynrama.simakerjabackend.model.DocumentActivityType;
+import com.rynrama.simakerjabackend.model.MoAIADocumentType;
+import com.rynrama.simakerjabackend.model.StudentSnapshot;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.annotation.JsonNaming;
 
-import java.util.UUID;
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+public class MoaIADocumentRequest {
 
-@Entity
-@Table(name = "moa_ia_documents")
-public class MoaIADocumentModel {
-
-    @Id
-    @UuidGenerator
-    private UUID id;
-
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "submission_id",
-            nullable = false,
-            unique = true,
-            foreignKey = @ForeignKey(name = "fk_moa_ia_documents_submission")
-    )
-    private SubmissionModel submission;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "document_type", nullable = false)
+    @NotNull
     private MoAIADocumentType documentType;
 
-    @Column(name = "partner_name", nullable = false)
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String partnerName;
 
-    @Column(name = "partner_number", nullable = false, length = 50)
+    @NotNull
+    @Size(max = 50)
+    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String partnerNumber;
 
-    @Column(name = "faculty_representative_name", nullable = false)
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String facultyRepresentativeName;
 
-    @Column(name = "partner_representative_name", nullable = false)
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String partnerRepresentativeName;
 
-    @Column(name = "partner_representative_position", nullable = false)
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String partnerRepresentativePosition;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "document_activity", nullable = false)
-    private DocumentActivityType activityType;
+    @NotNull
+    private DocumentActivityType  activityType;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "student_snapshot", columnDefinition = "jsonb", nullable = false)
+    @Valid
     private StudentSnapshot studentSnapshot;
 
-    public MoaIADocumentModel() {
-    }
-
-    public MoaIADocumentModel(
-            UUID id, MoAIADocumentType documentType, String partnerName, String partnerNumber,
+    public MoaIADocumentRequest(
+            MoAIADocumentType documentType, String partnerName, String partnerNumber,
             String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
             DocumentActivityType activityType, StudentSnapshot studentSnapshot
     ) {
-        this.id = id;
         this.documentType = documentType;
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
@@ -69,14 +56,6 @@ public class MoaIADocumentModel {
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
         this.studentSnapshot = studentSnapshot;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public MoAIADocumentType getDocumentType() {
@@ -141,13 +120,5 @@ public class MoaIADocumentModel {
 
     public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
         this.studentSnapshot = studentSnapshot;
-    }
-
-    public SubmissionModel getSubmission() {
-        return submission;
-    }
-
-    public void setSubmission(SubmissionModel submission) {
-        this.submission = submission;
     }
 }

@@ -31,13 +31,15 @@ public class SubmissionModel {
     @JoinColumn(name = "user_id", nullable = false)
     private UserModel user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "submission_type", length = 50, nullable = false)
     private SubmissionType submissionType;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
     private SubmissionStatus status = SubmissionStatus.pending;
 
-    @Lob
+    @Column(columnDefinition = "text")
     private String notes;
 
     @Column(name = "faculty_letter_number")
