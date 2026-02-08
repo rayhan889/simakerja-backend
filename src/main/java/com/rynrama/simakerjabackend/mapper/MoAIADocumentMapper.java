@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.mapper;
 
+import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
 import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
 import com.rynrama.simakerjabackend.model.MoaIADocumentModel;
 import org.modelmapper.ModelMapper;
@@ -18,5 +19,9 @@ public class MoAIADocumentMapper {
 
     public MoaIADocumentModel toModel(MoaIADocumentRequest request) {
         return modelMapper.map(request, MoaIADocumentModel.class);
+    }
+
+    public MoAIADocumentDTO toDto(MoaIADocumentModel model) {
+        return modelMapper.map(model, MoAIADocumentDTO.class);
     }
 }

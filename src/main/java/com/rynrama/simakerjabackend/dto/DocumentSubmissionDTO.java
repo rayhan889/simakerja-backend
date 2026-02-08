@@ -1,24 +1,44 @@
 package com.rynrama.simakerjabackend.dto;
 
+import com.rynrama.simakerjabackend.model.SubmissionStatus;
 import com.rynrama.simakerjabackend.model.SubmissionType;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.annotation.JsonNaming;
 
 import java.time.Instant;
 
+@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class DocumentSubmissionDTO {
-    private String submissionCode;
+    private String id;
     private SubmissionType submissionType;
-    private String status;
+    private SubmissionStatus status;
     private String notes;
-    private String facultyLetterNumber;
     private String faculty;
     private Instant submissionDate;
 
-    public String getSubmissionCode() {
-        return submissionCode;
+
+    public DocumentSubmissionDTO(
+            String id,
+            SubmissionType submissionType, SubmissionStatus status,
+            String notes, String faculty, Instant submissionDate
+    ) {
+        this.id = id;
+        this.submissionType = submissionType;
+        this.status = status;
+        this.notes = notes;
+        this.faculty = faculty;
+        this.submissionDate = submissionDate;
     }
 
-    public void setSubmissionCode(String submissionCode) {
-        this.submissionCode = submissionCode;
+    public DocumentSubmissionDTO() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public SubmissionType getSubmissionType() {
@@ -29,11 +49,11 @@ public class DocumentSubmissionDTO {
         this.submissionType = submissionType;
     }
 
-    public String getStatus() {
+    public SubmissionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(SubmissionStatus status) {
         this.status = status;
     }
 
@@ -43,14 +63,6 @@ public class DocumentSubmissionDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public String getFacultyLetterNumber() {
-        return facultyLetterNumber;
-    }
-
-    public void setFacultyLetterNumber(String facultyLetterNumber) {
-        this.facultyLetterNumber = facultyLetterNumber;
     }
 
     public String getFaculty() {
