@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.service;
 
+import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.LecturerRepository;
 import com.rynrama.simakerjabackend.repository.OAuthIdentityRepository;
@@ -55,7 +56,7 @@ public class OAuth2UserService extends OidcUserService {
             throw new OAuth2AuthenticationException("User is inactive");
         }
 
-        return oidcUser;
+        return new CustomUserPrincipal(oidcUser, user);
     }
 
     private OauthIdentityModel createUser(OidcUser oidcUser){

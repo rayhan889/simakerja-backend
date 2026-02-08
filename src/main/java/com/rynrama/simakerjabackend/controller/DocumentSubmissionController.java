@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.controller;
 
+import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
 import com.rynrama.simakerjabackend.dto.DocumentSubmissionRequest;
 import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +34,13 @@ public class DocumentSubmissionController {
     }
 
     @GetMapping("")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
     public Page<DocumentSubmissionDTO> getAllSubmissions(Pageable pageable) {
         return documentService.findPaginatedSubmissions(pageable);
     }
 
     @GetMapping("/{submission_id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
     public Optional<MoAIADocumentDTO>  findMoAIABySubmissionId(
             @PathVariable("submission_id") UUID submissionId
     ) {
@@ -44,13 +48,14 @@ public class DocumentSubmissionController {
     }
 
     @PostMapping("")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> submitDocument(
         @Valid @RequestBody DocumentSubmissionRequest request,
-        @AuthenticationPrincipal OidcUser oidcUser
+        @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         SubmissionModel submission = documentMapper.toModel(request);
 
-        String userEmail = oidcUser.getEmail();
+        String userEmail = principal.getEmail();
         documentService.saveDocument(
                 submission,
                 userEmail,

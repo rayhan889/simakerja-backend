@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.controller;
 
+import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +14,13 @@ import java.util.Map;
 public class AuthController {
 
     @GetMapping("/me")
-    public Map<String, Object> me(@AuthenticationPrincipal OidcUser oidcUser){
+    public Map<String, Object> me(@AuthenticationPrincipal CustomUserPrincipal principal){
         return Map.of(
-                "sub",oidcUser.getSubject(),
-                "email", oidcUser.getEmail(),
-                "name", oidcUser.getName(),
-                "picture", oidcUser.getPicture()
+                "sub",principal.getSubject(),
+                "email", principal.getEmail(),
+                "name", principal.getName(),
+                "picture", principal.getPicture(),
+                "role", principal.getUser().getRole().name()
         );
     }
 }
