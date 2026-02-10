@@ -2,14 +2,18 @@ package com.rynrama.simakerjabackend.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
+@EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -29,9 +33,9 @@ public class SecurityConfig {
                         .redirectionEndpoint(redir -> redir
                                 .baseUri("/login/oauth2/code/*")
                         )
+                        .defaultSuccessUrl("http://localhost:5173")
                 )
-                // Disable CSRF for development purposes
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .headers((headers) ->
                         headers
                                 .contentSecurityPolicy(csp -> csp
@@ -40,7 +44,7 @@ public class SecurityConfig {
                                                         "script-src 'self'; " +
                                                         "style-src 'self' 'unsafe-inline'; " +
                                                         "img-src 'self' data: https:; " +
-                                                        "connect-src 'self' http://localhost:3000; " +
+                                                        "connect-src 'self' http://localhost:5173; " +
                                                         "frame-ancestors 'none';"
                                         )
                                 )

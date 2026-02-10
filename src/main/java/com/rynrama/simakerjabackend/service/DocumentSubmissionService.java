@@ -1,7 +1,10 @@
 package com.rynrama.simakerjabackend.service;
 
+import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
+import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
 import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
+import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.MoaIADocumentModel;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import com.rynrama.simakerjabackend.model.SubmissionType;
@@ -10,10 +13,14 @@ import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class DocumentSubmissionService {
@@ -21,15 +28,26 @@ public class DocumentSubmissionService {
     private final SubmissionRepository submissionRepository;
     private final MoAIADocumentRepository moAIADocumentRepository;
     private final UserRepository userRepository;
+    private final DocumentSubmissionMapper documentMapper;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            DocumentSubmissionMapper documentMapper
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
+        this.documentMapper = documentMapper;
+    }
+
+    public Page<DocumentSubmissionDTO> findPaginatedSubmissions(Pageable pageable) {
+        return submissionRepository.findAllDocuments(pageable);
+    }
+
+    public Optional<MoAIADocumentDTO> findMoAIABySubmissionId(UUID submissionId) {
+        return moAIADocumentRepository.findAllMoAIABySubmissionId(submissionId);
     }
 
     @Transactional
