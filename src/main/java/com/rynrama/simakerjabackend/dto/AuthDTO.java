@@ -4,20 +4,26 @@ import com.rynrama.simakerjabackend.model.UserRole;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
+import java.util.UUID;
+
 @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class AuthDTO {
+    private UUID id;
     private String email;
     private String fullName;
     private String phoneNumber;
     private UserRole role;
     private String status;
+    private String profilePicture;
 
-    public AuthDTO(String email, String fullName, String phoneNumber, UserRole role, String status) {
+    public AuthDTO(UUID id, String email, String fullName, String phoneNumber, UserRole role, String status,  String profilePicture) {
+        this.id = id;
         this.email = email;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.role = role;
         this.status = status;
+        this.profilePicture = profilePicture;
     }
 
     public AuthDTO() {
@@ -61,5 +67,21 @@ public class AuthDTO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getId() {
+        return id;
     }
 }
