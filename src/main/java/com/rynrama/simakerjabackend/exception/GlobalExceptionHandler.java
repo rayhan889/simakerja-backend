@@ -1,6 +1,7 @@
 package com.rynrama.simakerjabackend.exception;
 
 import com.rynrama.simakerjabackend.dto.ErrorResponse;
+import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
 import org.springframework.http.HttpStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,10 +28,7 @@ public class GlobalExceptionHandler {
 
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             Map<String, String> error = new HashMap<>();
-            String fieldName = fieldError.getField()
-                    .replaceAll("([a-z])([A-Z])", "$1_$2")
-                    .toLowerCase();
-            error.put("field", fieldName);
+            error.put("field", fieldError.getField());
             error.put("message", fieldError.getDefaultMessage());
             errors.add(error);
         }
@@ -77,5 +76,20 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(InvalidEnumException.class)
+    public ResponseEntity<GlobalAPIResponse<Object>> handleInvalidEnum(
+            InvalidEnumException ex
+    ) {
+        GlobalAPIResponse<Object> response = new GlobalAPIResponse<>(
+                false,
+                null,
+                ex.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
     }
 }
