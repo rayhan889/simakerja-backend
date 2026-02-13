@@ -10,7 +10,9 @@ import jakarta.validation.constraints.Size;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+import java.util.List;
+
+@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class MoaIADocumentRequest {
 
     @NotNull
@@ -41,12 +43,12 @@ public class MoaIADocumentRequest {
     private DocumentActivityType  activityType;
 
     @Valid
-    private StudentSnapshot studentSnapshot;
+    private List<StudentSnapshot> studentSnapshots;
 
     public MoaIADocumentRequest(
             MoAIADocumentType documentType, String partnerName, String partnerNumber,
             String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
-            DocumentActivityType activityType, StudentSnapshot studentSnapshot
+            DocumentActivityType activityType, List<StudentSnapshot> studentSnapshots
     ) {
         this.documentType = documentType;
         this.partnerName = partnerName;
@@ -55,7 +57,7 @@ public class MoaIADocumentRequest {
         this.partnerRepresentativeName = partnerRepresentativeName;
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
-        this.studentSnapshot = studentSnapshot;
+        this.studentSnapshots = studentSnapshots;
     }
 
     public MoAIADocumentType getDocumentType() {
@@ -114,11 +116,11 @@ public class MoaIADocumentRequest {
         this.activityType = activityType;
     }
 
-    public StudentSnapshot getStudentSnapshot() {
-        return studentSnapshot;
+    public List<StudentSnapshot> getStudentSnapshots() {
+        return studentSnapshots;
     }
 
-    public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
-        this.studentSnapshot = studentSnapshot;
+    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
     }
 }

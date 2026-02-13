@@ -37,7 +37,7 @@ public class SubmissionModel {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
-    private SubmissionStatus status = SubmissionStatus.pending;
+    private SubmissionStatus status = SubmissionStatus.in_process;
 
     @Column(columnDefinition = "text")
     private String notes;

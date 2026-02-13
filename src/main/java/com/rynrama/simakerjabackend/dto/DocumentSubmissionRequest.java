@@ -7,7 +7,7 @@ import tools.jackson.databind.annotation.JsonNaming;
 import com.rynrama.simakerjabackend.model.SubmissionType;
 import jakarta.annotation.Nonnull;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class DocumentSubmissionRequest {
     @NotNull
     private SubmissionType submissionType;

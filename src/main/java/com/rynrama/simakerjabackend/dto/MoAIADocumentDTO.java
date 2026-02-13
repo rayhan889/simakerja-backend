@@ -6,6 +6,8 @@ import com.rynrama.simakerjabackend.model.StudentSnapshot;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
+import java.util.List;
+
 @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class MoAIADocumentDTO {
     private String partnerName;
@@ -13,20 +15,20 @@ public class MoAIADocumentDTO {
     private String facultyRepresentativeName;
     private String partnerRepresentativeName;
     private String partnerRepresentativePosition;
-    private StudentSnapshot studentSnapshot;
+    private List<StudentSnapshot> studentSnapshots;
     private DocumentActivityType documentActivity;
     private MoAIADocumentType documentType;
 
     public MoAIADocumentDTO() {
     }
 
-    public MoAIADocumentDTO(String partnerName, String partnerNumber, String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition, StudentSnapshot studentSnapshot, DocumentActivityType documentActivity, MoAIADocumentType documentType) {
+    public MoAIADocumentDTO(String partnerName, String partnerNumber, String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition, List<StudentSnapshot> studentSnapshots, DocumentActivityType documentActivity, MoAIADocumentType documentType) {
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
         this.facultyRepresentativeName = facultyRepresentativeName;
         this.partnerRepresentativeName = partnerRepresentativeName;
         this.partnerRepresentativePosition = partnerRepresentativePosition;
-        this.studentSnapshot = studentSnapshot;
+        this.studentSnapshots = studentSnapshots;
         this.documentActivity = documentActivity;
         this.documentType = documentType;
     }
@@ -71,12 +73,12 @@ public class MoAIADocumentDTO {
         this.partnerRepresentativePosition = partnerRepresentativePosition;
     }
 
-    public StudentSnapshot getStudentSnapshot() {
-        return studentSnapshot;
+    public List<StudentSnapshot> getStudentSnapshots() {
+        return studentSnapshots;
     }
 
-    public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
-        this.studentSnapshot = studentSnapshot;
+    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
     }
 
     public DocumentActivityType getDocumentActivity() {

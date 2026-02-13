@@ -3,12 +3,10 @@ package com.rynrama.simakerjabackend.service;
 import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
 import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
 import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
+import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
-import com.rynrama.simakerjabackend.model.MoaIADocumentModel;
-import com.rynrama.simakerjabackend.model.SubmissionModel;
-import com.rynrama.simakerjabackend.model.SubmissionType;
-import com.rynrama.simakerjabackend.model.UserModel;
+import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
@@ -42,16 +40,46 @@ public class DocumentSubmissionService {
         this.documentMapper = documentMapper;
     }
 
-    public Page<DocumentSubmissionDTO> findPaginatedSubmissions(Pageable pageable) {
-        return submissionRepository.findAllDocuments(pageable);
+    public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
+            Pageable pageable,
+            String status,
+            String subsType
+    ) {
+        return submissionRepository.findAllSubmissions(
+                pageable,
+                status,
+                subsType
+        );
     }
 
-    public Optional<MoAIADocumentDTO> findMoAIABySubmissionId(UUID submissionId) {
+    public Optional<MoAIADocumentDTO> findMoAIADetailsBySubmissionId(UUID submissionId) {
         return moAIADocumentRepository.findAllMoAIABySubmissionId(submissionId);
     }
 
+    public Page<MoAIADocumentDTO> findPaginatedMoAIA(
+            Pageable pageable,
+            UUID userId,
+            String search
+    ) {
+        return moAIADocumentRepository.findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+    }
+
+    public Page<StudentSubmissionPaginationDTO> findSubmissionsByUserIdAndMoAIAType(
+        Pageable pageable,
+        UUID userId,
+        String status,
+        String search
+    ) {
+        return submissionRepository.findSubmissionsByUserIdAndMoAIAType(
+                pageable,
+                userId,
+                status,
+                search
+        );
+    }
+
     @Transactional
-    public void saveDocument(
+    public SubmissionModel saveDocument(
             SubmissionModel submission,
             String userEmail,
             MoaIADocumentRequest moaIADocumentRequest
@@ -76,6 +104,8 @@ public class DocumentSubmissionService {
             case SubmissionType.mou_request -> saveMouRequestDocument();
             case SubmissionType.visit_request -> saveVisitRequestDocument();
         }
+
+        return submission;
     }
 
     public void saveMoaIADocument(
@@ -92,7 +122,7 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativeName(moaIADocumentRequest.getPartnerRepresentativeName());
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
-        moaIADocument.setStudentSnapshot(moaIADocumentRequest.getStudentSnapshot());
+        moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
 
         moAIADocumentRepository.save(moaIADocument);
     }

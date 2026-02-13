@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -49,8 +50,8 @@ public class MoaIADocumentModel {
     private DocumentActivityType activityType;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "student_snapshot", columnDefinition = "jsonb", nullable = false)
-    private StudentSnapshot studentSnapshot;
+    @Column(name = "student_snapshots", columnDefinition = "jsonb", nullable = false)
+    private List<StudentSnapshot> studentSnapshots;
 
     public MoaIADocumentModel() {
     }
@@ -58,7 +59,7 @@ public class MoaIADocumentModel {
     public MoaIADocumentModel(
             UUID id, MoAIADocumentType documentType, String partnerName, String partnerNumber,
             String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
-            DocumentActivityType activityType, StudentSnapshot studentSnapshot
+            DocumentActivityType activityType, List<StudentSnapshot> studentSnapshots
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -68,7 +69,7 @@ public class MoaIADocumentModel {
         this.partnerRepresentativeName = partnerRepresentativeName;
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
-        this.studentSnapshot = studentSnapshot;
+        this.studentSnapshots = studentSnapshots;
     }
 
     public UUID getId() {
@@ -135,19 +136,19 @@ public class MoaIADocumentModel {
         this.activityType = activityType;
     }
 
-    public StudentSnapshot getStudentSnapshot() {
-        return studentSnapshot;
-    }
-
-    public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
-        this.studentSnapshot = studentSnapshot;
-    }
-
     public SubmissionModel getSubmission() {
         return submission;
     }
 
     public void setSubmission(SubmissionModel submission) {
         this.submission = submission;
+    }
+
+    public List<StudentSnapshot> getStudentSnapshots() {
+        return studentSnapshots;
+    }
+
+    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
     }
 }
