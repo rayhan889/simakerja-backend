@@ -53,13 +53,27 @@ public class MoaIADocumentModel {
     @Column(name = "student_snapshots", columnDefinition = "jsonb", nullable = false)
     private List<StudentSnapshot> studentSnapshots;
 
+    @Column(name = "partner_logo_key", nullable = false)
+    private String partnerLogoKey;
+
+    @Column(name = "partner_address", nullable = false)
+    private String partnerAddress;
+
     public MoaIADocumentModel() {
     }
 
     public MoaIADocumentModel(
-            UUID id, MoAIADocumentType documentType, String partnerName, String partnerNumber,
-            String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
-            DocumentActivityType activityType, List<StudentSnapshot> studentSnapshots
+            UUID id,
+            MoAIADocumentType documentType,
+            String partnerName,
+            String partnerNumber,
+            String facultyRepresentativeName,
+            String partnerRepresentativeName,
+            String partnerRepresentativePosition,
+            DocumentActivityType activityType,
+            List<StudentSnapshot> studentSnapshots,
+            String partnerLogoKey,
+            String partnerAddress
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -70,6 +84,8 @@ public class MoaIADocumentModel {
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
         this.studentSnapshots = studentSnapshots;
+        this.partnerLogoKey = partnerLogoKey;
+        this.partnerAddress = partnerAddress;
     }
 
     public UUID getId() {
@@ -150,5 +166,21 @@ public class MoaIADocumentModel {
 
     public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
         this.studentSnapshots = studentSnapshots;
+    }
+
+    public String getPartnerLogoKey() {
+        return partnerLogoKey;
+    }
+
+    public void setPartnerLogoKey(String partnerLogoKey) {
+        this.partnerLogoKey = partnerLogoKey;
+    }
+
+    public String getPartnerAddress() {
+        return partnerAddress;
+    }
+
+    public void setPartnerAddress(String partnerAddress) {
+        this.partnerAddress = partnerAddress;
     }
 }
