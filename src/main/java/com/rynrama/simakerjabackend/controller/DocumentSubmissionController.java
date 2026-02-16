@@ -93,7 +93,7 @@ public class DocumentSubmissionController {
                 .body(GlobalAPIResponse.success(moaIa));
     }
 
-    @GetMapping("/moa-ia/{submission_id}")
+    @GetMapping("/moa-ia/by-submission/{submission_id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
     public Optional<MoAIADocumentDTO>  findMoAIADetailsBySubmissionId(
             @PathVariable("submission_id") UUID submissionId

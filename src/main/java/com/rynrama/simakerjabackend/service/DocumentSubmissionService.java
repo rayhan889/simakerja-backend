@@ -4,21 +4,22 @@ import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
 import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
 import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
 import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
+import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
-import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
+import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class DocumentSubmissionService {
@@ -26,18 +27,18 @@ public class DocumentSubmissionService {
     private final SubmissionRepository submissionRepository;
     private final MoAIADocumentRepository moAIADocumentRepository;
     private final UserRepository userRepository;
-    private final DocumentSubmissionMapper documentMapper;
+    private final MinioService minioService;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
             UserRepository userRepository,
-            DocumentSubmissionMapper documentMapper
+            MinioService minioService
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
-        this.documentMapper = documentMapper;
+        this.minioService = minioService;
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -95,6 +96,7 @@ public class DocumentSubmissionService {
         submission.setUser(user);
         submission.setSubmissionDate(Instant.now());
         submission.setCreatedAt(Instant.now());
+        submission.setFacultyAddress(submission.getFacultyAddress());
 
         submissionRepository.save(submission);
 
@@ -123,6 +125,8 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
         moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
+        moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
+        moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
 
         moAIADocumentRepository.save(moaIADocument);
     }
@@ -134,6 +138,59 @@ public class DocumentSubmissionService {
     }
 
     public void saveVisitRequestDocument() {
+    }
+
+    public MoAIAPDFViewModel buildMoAIAData(UUID submissionId) throws Exception {
+        MoAIAPDFViewModel data = new MoAIAPDFViewModel();
+
+        MoaIADocumentModel moaIAData = moAIADocumentRepository.
+                findById(submissionId).
+                orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "MoA and IA document not found with submission id" + submissionId
+                    )
+                );
+
+        ZoneId zone = ZoneId.of("Asia/Jakarta");
+
+        data.setFacultyName(moaIAData.getSubmission().getFaculty());
+        data.setFacultyRepresentativeName(moaIAData.getFacultyRepresentativeName());
+        data.setFacultyAddress(moaIAData.getSubmission().getFacultyAddress());
+        data.setPartnerName(moaIAData.getPartnerName());
+
+        String partnerLogoPreviewUrl = minioService.getPresignedUrl(moaIAData.getPartnerLogoKey());
+
+        data.setPartnerLogoUrl(partnerLogoPreviewUrl);
+        data.setPartnerNumber(moaIAData.getPartnerNumber());
+        data.setPartnerRepresentativeName(moaIAData.getPartnerRepresentativeName());
+        data.setPartnerRepresentativePosition(moaIAData.getPartnerRepresentativePosition());
+        data.setActivityType(moaIAData.getActivityType());
+
+        Instant submissionDate =  moaIAData.getSubmission().getSubmissionDate();
+        ZonedDateTime zdt = submissionDate.atZone(zone);
+
+        DateTimeFormatter dayFormatter =
+                DateTimeFormatter.ofPattern("EEEE", Locale.forLanguageTag("id-ID"));
+
+        DateTimeFormatter monthFormatter =
+                DateTimeFormatter.ofPattern("MMMM", Locale.forLanguageTag("id-ID"));
+
+        String day = zdt.format(dayFormatter);
+        String monthName = zdt.format(monthFormatter);
+        String date = String.valueOf(zdt.getDayOfMonth());
+        int year = zdt.getYear();
+        String yearInLongText = IndonesianNumberConverter.toWords(year);
+        String ddMMyyyFormatDate =  zdt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        data.setDay(day);
+        data.setDate(date);
+        data.setMonth(monthName);
+        data.setYearInLongText(yearInLongText);
+        data.setDdMMyyyyFormatDate(ddMMyyyFormatDate);
+
+        data.setStudentSnapshots(moaIAData.getStudentSnapshots());
+
+        return data;
     }
 
 }

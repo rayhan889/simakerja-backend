@@ -51,6 +51,9 @@ public class SubmissionModel {
     @Column(name = "submission_date", nullable = false)
     private Instant submissionDate;
 
+    @Column(name = "faculty_address", nullable = false)
+    private String facultyAddress;
+
 //    TO BE IMPLEMENTED LATER
 //    private Instant adhocVerifiedAt;
 //    private AdhocModel adhoc;
@@ -66,7 +69,7 @@ public class SubmissionModel {
     public SubmissionModel() {
     }
 
-    public SubmissionModel(String id, String submissionCode, UserModel user, SubmissionType submissionType, SubmissionStatus status, String notes, String facultyLetterNumber, String faculty, Instant submissionDate, Instant createdAt, Instant updatedAt) {
+    public SubmissionModel(String id, String submissionCode, UserModel user, SubmissionType submissionType, SubmissionStatus status, String notes, String facultyLetterNumber, String faculty, Instant submissionDate, String facultyAddress ,Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.submissionCode = submissionCode;
         this.user = user;
@@ -76,6 +79,7 @@ public class SubmissionModel {
         this.facultyLetterNumber = facultyLetterNumber;
         this.faculty = faculty;
         this.submissionDate = submissionDate;
+        this.facultyAddress = facultyAddress;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -166,5 +170,13 @@ public class SubmissionModel {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getFacultyAddress() {
+        return facultyAddress;
+    }
+
+    public void setFacultyAddress(String facultyAddress) {
+        this.facultyAddress = facultyAddress;
     }
 }
