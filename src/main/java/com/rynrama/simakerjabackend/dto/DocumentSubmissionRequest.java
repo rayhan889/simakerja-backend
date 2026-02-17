@@ -21,7 +21,6 @@ public class DocumentSubmissionRequest {
     private String faculty;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z ]+$", message = "can't use any special characters")
     private String facultyAddress;
 
     @Valid

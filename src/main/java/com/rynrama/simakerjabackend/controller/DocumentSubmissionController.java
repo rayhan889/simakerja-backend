@@ -1,14 +1,12 @@
 package com.rynrama.simakerjabackend.controller;
 
 import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionRequest;
-import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
-import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
+import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import com.rynrama.simakerjabackend.service.DocumentSubmissionService;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
+import okhttp3.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -119,5 +117,17 @@ public class DocumentSubmissionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(GlobalAPIResponse.success(createdSubmission, "Submission successfully created"));
+    }
+
+    @GetMapping("/partners")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
+    public ResponseEntity<GlobalAPIResponse<List<PartnerProfileDTO>>> getAllExistingPartners(
+            @RequestParam(value = "search", required = false)  String search
+    ) {
+        List<PartnerProfileDTO> partnerNames = documentService.findAllExistingPartners(search);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(partnerNames));
     }
 }

@@ -1,9 +1,7 @@
 package com.rynrama.simakerjabackend.service;
 
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
-import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
-import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
-import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
+import com.rynrama.simakerjabackend.dto.*;
+import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.model.*;
@@ -191,6 +189,10 @@ public class DocumentSubmissionService {
         data.setStudentSnapshots(moaIAData.getStudentSnapshots());
 
         return data;
+    }
+
+    public List<PartnerProfileDTO> findAllExistingPartners(String search) {
+        return moAIADocumentRepository.findAllExistingPartners(search);
     }
 
 }
