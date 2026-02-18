@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -49,16 +50,30 @@ public class MoaIADocumentModel {
     private DocumentActivityType activityType;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "student_snapshot", columnDefinition = "jsonb", nullable = false)
-    private StudentSnapshot studentSnapshot;
+    @Column(name = "student_snapshots", columnDefinition = "jsonb", nullable = false)
+    private List<StudentSnapshot> studentSnapshots;
+
+    @Column(name = "partner_logo_key", nullable = false)
+    private String partnerLogoKey;
+
+    @Column(name = "partner_address", nullable = false)
+    private String partnerAddress;
 
     public MoaIADocumentModel() {
     }
 
     public MoaIADocumentModel(
-            UUID id, MoAIADocumentType documentType, String partnerName, String partnerNumber,
-            String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
-            DocumentActivityType activityType, StudentSnapshot studentSnapshot
+            UUID id,
+            MoAIADocumentType documentType,
+            String partnerName,
+            String partnerNumber,
+            String facultyRepresentativeName,
+            String partnerRepresentativeName,
+            String partnerRepresentativePosition,
+            DocumentActivityType activityType,
+            List<StudentSnapshot> studentSnapshots,
+            String partnerLogoKey,
+            String partnerAddress
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -68,7 +83,9 @@ public class MoaIADocumentModel {
         this.partnerRepresentativeName = partnerRepresentativeName;
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
-        this.studentSnapshot = studentSnapshot;
+        this.studentSnapshots = studentSnapshots;
+        this.partnerLogoKey = partnerLogoKey;
+        this.partnerAddress = partnerAddress;
     }
 
     public UUID getId() {
@@ -135,19 +152,35 @@ public class MoaIADocumentModel {
         this.activityType = activityType;
     }
 
-    public StudentSnapshot getStudentSnapshot() {
-        return studentSnapshot;
-    }
-
-    public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
-        this.studentSnapshot = studentSnapshot;
-    }
-
     public SubmissionModel getSubmission() {
         return submission;
     }
 
     public void setSubmission(SubmissionModel submission) {
         this.submission = submission;
+    }
+
+    public List<StudentSnapshot> getStudentSnapshots() {
+        return studentSnapshots;
+    }
+
+    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
+    }
+
+    public String getPartnerLogoKey() {
+        return partnerLogoKey;
+    }
+
+    public void setPartnerLogoKey(String partnerLogoKey) {
+        this.partnerLogoKey = partnerLogoKey;
+    }
+
+    public String getPartnerAddress() {
+        return partnerAddress;
+    }
+
+    public void setPartnerAddress(String partnerAddress) {
+        this.partnerAddress = partnerAddress;
     }
 }

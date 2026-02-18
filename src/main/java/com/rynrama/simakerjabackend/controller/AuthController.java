@@ -21,11 +21,13 @@ public class AuthController {
     public ResponseEntity<GlobalAPIResponse<AuthDTO>> me(@AuthenticationPrincipal CustomUserPrincipal principal){
         AuthDTO authInfo = new AuthDTO();
 
+        authInfo.setId(principal.getUser().getId());
         authInfo.setEmail(principal.getEmail());
         authInfo.setFullName(principal.getFullName());
         authInfo.setPhoneNumber(principal.getUser().getPhoneNumber());
         authInfo.setRole(principal.getUser().getRole());
         authInfo.setStatus(principal.getUser().getStatus());
+        authInfo.setProfilePicture(principal.getPicture());
 
         return ResponseEntity
                 .status(HttpStatus.OK)

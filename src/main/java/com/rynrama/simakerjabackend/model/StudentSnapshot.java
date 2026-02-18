@@ -6,10 +6,9 @@ import jakarta.validation.constraints.*;
 
 import java.util.List;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+//@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class StudentSnapshot {
     @NotNull
-    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String studyProgram;
 
     @NotNull

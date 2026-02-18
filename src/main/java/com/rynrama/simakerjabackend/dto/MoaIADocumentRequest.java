@@ -4,13 +4,16 @@ import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.MoAIADocumentType;
 import com.rynrama.simakerjabackend.model.StudentSnapshot;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+import java.util.List;
+
+@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class MoaIADocumentRequest {
 
     @NotNull
@@ -41,12 +44,29 @@ public class MoaIADocumentRequest {
     private DocumentActivityType  activityType;
 
     @Valid
-    private StudentSnapshot studentSnapshot;
+    private List<StudentSnapshot> studentSnapshots;
+
+    @NotBlank(message = "Partner address is required")
+    private String partnerAddress;
+
+    @NotBlank(message = "Partner logo is required. Please upload a logo first.")
+    @Pattern(
+            regexp = "^partner-logos/[a-f0-9\\-]{36}$",
+            message = "Invalid logo key format. Must be obtained from upload endpoint."
+    )
+    private String partnerLogoKey;
 
     public MoaIADocumentRequest(
-            MoAIADocumentType documentType, String partnerName, String partnerNumber,
-            String facultyRepresentativeName, String partnerRepresentativeName, String partnerRepresentativePosition,
-            DocumentActivityType activityType, StudentSnapshot studentSnapshot
+            MoAIADocumentType documentType,
+            String partnerName,
+            String partnerNumber,
+            String facultyRepresentativeName,
+            String partnerRepresentativeName,
+            String partnerRepresentativePosition,
+            DocumentActivityType activityType,
+            List<StudentSnapshot> studentSnapshots,
+            String partnerAddress,
+            String partnerLogoKey
     ) {
         this.documentType = documentType;
         this.partnerName = partnerName;
@@ -55,7 +75,9 @@ public class MoaIADocumentRequest {
         this.partnerRepresentativeName = partnerRepresentativeName;
         this.partnerRepresentativePosition = partnerRepresentativePosition;
         this.activityType = activityType;
-        this.studentSnapshot = studentSnapshot;
+        this.studentSnapshots = studentSnapshots;
+        this.partnerAddress = partnerAddress;
+        this.partnerLogoKey = partnerLogoKey;
     }
 
     public MoAIADocumentType getDocumentType() {
@@ -114,11 +136,27 @@ public class MoaIADocumentRequest {
         this.activityType = activityType;
     }
 
-    public StudentSnapshot getStudentSnapshot() {
-        return studentSnapshot;
+    public List<StudentSnapshot> getStudentSnapshots() {
+        return studentSnapshots;
     }
 
-    public void setStudentSnapshot(StudentSnapshot studentSnapshot) {
-        this.studentSnapshot = studentSnapshot;
+    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
+    }
+
+    public String getPartnerAddress() {
+        return partnerAddress;
+    }
+
+    public void setPartnerAddress(String partnerAddress) {
+        this.partnerAddress = partnerAddress;
+    }
+
+    public String getPartnerLogoKey() {
+        return partnerLogoKey;
+    }
+
+    public void setPartnerLogoKey(String partnerLogoKey) {
+        this.partnerLogoKey = partnerLogoKey;
     }
 }

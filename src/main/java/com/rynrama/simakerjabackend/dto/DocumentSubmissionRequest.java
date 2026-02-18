@@ -7,7 +7,7 @@ import tools.jackson.databind.annotation.JsonNaming;
 import com.rynrama.simakerjabackend.model.SubmissionType;
 import jakarta.annotation.Nonnull;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class DocumentSubmissionRequest {
     @NotNull
     private SubmissionType submissionType;
@@ -20,6 +20,9 @@ public class DocumentSubmissionRequest {
     @Pattern(regexp = "^[a-zA-Z ]+$", message = "can't use any special characters")
     private String faculty;
 
+    @NotBlank
+    private String facultyAddress;
+
     @Valid
     private MoaIADocumentRequest moaIa;
 
@@ -27,11 +30,13 @@ public class DocumentSubmissionRequest {
             @Nonnull SubmissionType submissionType,
             String notes,
             @Nonnull String faculty,
+            @Nonnull String facultyAddress,
             MoaIADocumentRequest moaIa
     ) {
         this.submissionType = submissionType;
         this.notes = notes;
         this.faculty = faculty;
+        this.facultyAddress = facultyAddress;
         this.moaIa = moaIa;
     }
 
@@ -79,5 +84,13 @@ public class DocumentSubmissionRequest {
 
     public void setMoaIa(MoaIADocumentRequest moaIa) {
         this.moaIa = moaIa;
+    }
+
+    public String getFacultyAddress() {
+        return facultyAddress;
+    }
+
+    public void setFacultyAddress(String facultyAddress) {
+        this.facultyAddress = facultyAddress;
     }
 }

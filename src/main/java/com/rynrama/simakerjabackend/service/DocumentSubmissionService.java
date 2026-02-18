@@ -1,26 +1,25 @@
 package com.rynrama.simakerjabackend.service;
 
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
-import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
-import com.rynrama.simakerjabackend.dto.MoaIADocumentRequest;
+import com.rynrama.simakerjabackend.dto.*;
+import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
+import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
-import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
-import com.rynrama.simakerjabackend.model.MoaIADocumentModel;
-import com.rynrama.simakerjabackend.model.SubmissionModel;
-import com.rynrama.simakerjabackend.model.SubmissionType;
-import com.rynrama.simakerjabackend.model.UserModel;
+import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
+import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.IOException;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class DocumentSubmissionService {
@@ -28,30 +27,60 @@ public class DocumentSubmissionService {
     private final SubmissionRepository submissionRepository;
     private final MoAIADocumentRepository moAIADocumentRepository;
     private final UserRepository userRepository;
-    private final DocumentSubmissionMapper documentMapper;
+    private final MinioService minioService;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
             UserRepository userRepository,
-            DocumentSubmissionMapper documentMapper
+            MinioService minioService
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
-        this.documentMapper = documentMapper;
+        this.minioService = minioService;
     }
 
-    public Page<DocumentSubmissionDTO> findPaginatedSubmissions(Pageable pageable) {
-        return submissionRepository.findAllDocuments(pageable);
+    public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
+            Pageable pageable,
+            String status,
+            String subsType
+    ) {
+        return submissionRepository.findAllSubmissions(
+                pageable,
+                status,
+                subsType
+        );
     }
 
-    public Optional<MoAIADocumentDTO> findMoAIABySubmissionId(UUID submissionId) {
+    public Optional<MoAIADocumentDTO> findMoAIADetailsBySubmissionId(UUID submissionId) {
         return moAIADocumentRepository.findAllMoAIABySubmissionId(submissionId);
     }
 
+    public Page<MoAIADocumentDTO> findPaginatedMoAIA(
+            Pageable pageable,
+            UUID userId,
+            String search
+    ) {
+        return moAIADocumentRepository.findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+    }
+
+    public Page<StudentSubmissionPaginationDTO> findSubmissionsByUserIdAndMoAIAType(
+        Pageable pageable,
+        UUID userId,
+        String status,
+        String search
+    ) {
+        return submissionRepository.findSubmissionsByUserIdAndMoAIAType(
+                pageable,
+                userId,
+                status,
+                search
+        );
+    }
+
     @Transactional
-    public void saveDocument(
+    public SubmissionModel saveDocument(
             SubmissionModel submission,
             String userEmail,
             MoaIADocumentRequest moaIADocumentRequest
@@ -67,6 +96,7 @@ public class DocumentSubmissionService {
         submission.setUser(user);
         submission.setSubmissionDate(Instant.now());
         submission.setCreatedAt(Instant.now());
+        submission.setFacultyAddress(submission.getFacultyAddress());
 
         submissionRepository.save(submission);
 
@@ -76,6 +106,8 @@ public class DocumentSubmissionService {
             case SubmissionType.mou_request -> saveMouRequestDocument();
             case SubmissionType.visit_request -> saveVisitRequestDocument();
         }
+
+        return submission;
     }
 
     public void saveMoaIADocument(
@@ -92,7 +124,9 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativeName(moaIADocumentRequest.getPartnerRepresentativeName());
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
-        moaIADocument.setStudentSnapshot(moaIADocumentRequest.getStudentSnapshot());
+        moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
+        moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
+        moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
 
         moAIADocumentRepository.save(moaIADocument);
     }
@@ -104,6 +138,114 @@ public class DocumentSubmissionService {
     }
 
     public void saveVisitRequestDocument() {
+    }
+
+//    teknik_informatika > Teknik Informatika
+    public static String formatString(String input) {
+        if (input == null || input.isBlank()) return input;
+
+        String[] words = input.replace("_", " ").toLowerCase().split(" ");
+        StringBuilder result = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1))
+                        .append(" ");
+            }
+        }
+
+        return result.toString().trim();
+    }
+
+//    for student snapshots: [dono, joko] > 1. Dono 2. Joko
+    public static String toNumberedHtmlList(List<String> items) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            result.append(i + 1).append(". ").append(items.get(i));
+            if (i < items.size() - 1) result.append("<br/>");
+        }
+        return result.toString();
+    }
+
+    public MoAIAPDFViewModel buildMoAIAData(String submissionId) throws Exception {
+        MoAIAPDFViewModel data = new MoAIAPDFViewModel();
+
+        MoaIADocumentModel moaIAData = moAIADocumentRepository.
+                findBySubmissionId(submissionId).
+            orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "MoA and IA document not found with submission id" + submissionId
+                    )
+                );
+
+        ZoneId zone = ZoneId.of("Asia/Jakarta");
+
+        data.setFacultyName(moaIAData.getSubmission().getFaculty());
+        data.setFacultyRepresentativeName(moaIAData.getFacultyRepresentativeName());
+        data.setFacultyAddress(moaIAData.getSubmission().getFacultyAddress());
+        data.setPartnerName(moaIAData.getPartnerName());
+
+        String partnerLogoPreviewUrl = minioService.getPresignedUrl(moaIAData.getPartnerLogoKey());
+
+        data.setPartnerLogoUrl(partnerLogoPreviewUrl);
+        data.setPartnerNumber(moaIAData.getPartnerNumber());
+        data.setPartnerRepresentativeName(moaIAData.getPartnerRepresentativeName());
+        data.setPartnerRepresentativePosition(moaIAData.getPartnerRepresentativePosition());
+        data.setPartnerAddress(moaIAData.getPartnerAddress());
+
+        String formattedActivityType = "";
+        switch (moaIAData.getActivityType()) {
+            case DocumentActivityType.internship -> formattedActivityType = "Magang";
+            case DocumentActivityType.kkn ->  formattedActivityType = "KKN";
+            case DocumentActivityType.plp ->   formattedActivityType = "PLP";
+        }
+        data.setActivityType(formattedActivityType);
+
+        Instant submissionDate =  moaIAData.getSubmission().getSubmissionDate();
+        ZonedDateTime zdt = submissionDate.atZone(zone);
+
+        DateTimeFormatter dayFormatter =
+                DateTimeFormatter.ofPattern("EEEE", Locale.forLanguageTag("id-ID"));
+
+        DateTimeFormatter monthFormatter =
+                DateTimeFormatter.ofPattern("MMMM", Locale.forLanguageTag("id-ID"));
+
+        String day = zdt.format(dayFormatter);
+        String monthName = zdt.format(monthFormatter);
+        String date = String.valueOf(zdt.getDayOfMonth());
+        int year = zdt.getYear();
+        String yearInLongText = IndonesianNumberConverter.toWords(year);
+        String ddMMyyyFormatDate =  zdt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        data.setDay(day);
+        data.setDate(date);
+        data.setMonth(monthName);
+        data.setYearInLongText(yearInLongText);
+        data.setDdMMyyyyFormatDate(ddMMyyyFormatDate);
+
+        List<StudentSnapshot> studentSnapshots = moaIAData.getStudentSnapshots();
+        List<StudentSnapshotDisplayDTO> displayStudentSnapshotsDTO = new ArrayList<>();
+        for (StudentSnapshot snapshot:  studentSnapshots) {
+
+            StudentSnapshotDisplayDTO snapShotDTO = new StudentSnapshotDisplayDTO(
+                    formatString(snapshot.getStudyProgram()),
+                    snapshot.getUnit(),
+                    toNumberedHtmlList(snapshot.getStudents()),
+                    snapshot.getTotal()
+            );
+            displayStudentSnapshotsDTO.add(snapShotDTO);
+        }
+
+        data.setUnesaLogoUrl(minioService.getPresignedUrl("unesa_logo.png"));
+
+        data.setStudentSnapshots(displayStudentSnapshotsDTO);
+
+        return data;
+    }
+
+    public List<PartnerProfileDTO> findAllExistingPartners(String search) {
+        return moAIADocumentRepository.findAllExistingPartners(search);
     }
 
 }

@@ -1,28 +1,28 @@
 package com.rynrama.simakerjabackend.controller;
 
 import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionRequest;
-import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
+import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import com.rynrama.simakerjabackend.service.DocumentSubmissionService;
+import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
+import okhttp3.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/docs")
+@RequestMapping("/submissions")
 public class DocumentSubmissionController {
 
     private final DocumentSubmissionMapper documentMapper;
@@ -35,33 +35,99 @@ public class DocumentSubmissionController {
 
     @GetMapping("")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
-    public Page<DocumentSubmissionDTO> getAllSubmissions(Pageable pageable) {
-        return documentService.findPaginatedSubmissions(pageable);
+    public ResponseEntity<GlobalAPIResponse<Page<DocumentSubmissionDTO>>> getAllSubmissions(
+            Pageable pageable,
+            @RequestParam("status") String status,
+            @RequestParam("subsType") String subsType
+    ) {
+        Page<DocumentSubmissionDTO> submissions = documentService.findPaginatedSubmissions(
+                pageable,
+                status,
+                subsType
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(submissions));
     }
 
-    @GetMapping("/{submission_id}")
+    @GetMapping("/moa-ia")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
-    public Optional<MoAIADocumentDTO>  findMoAIABySubmissionId(
+    public ResponseEntity<GlobalAPIResponse<Page<MoAIADocumentDTO>>> getAllMoAIASubmissions(
+            Pageable pageable,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam(value = "search", required = false)  String search
+    ) {
+        UUID userId = principal.getUser().getId();
+
+        Page<MoAIADocumentDTO> moaIa = documentService.findPaginatedMoAIA(
+                pageable,
+                userId,
+                search
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(moaIa));
+    }
+
+    @GetMapping("/moa-ia/{user_id}")
+    @PreAuthorize("hasAnyRole('STUDENT')")
+    public ResponseEntity<GlobalAPIResponse<Page<StudentSubmissionPaginationDTO>>> getSubmissionsByUserIdAndMoAIAType(
+            Pageable pageable,
+            @RequestParam(value = "search", required = false)  String search,
+            @RequestParam(value = "status", required = false)  String status,
+            @PathVariable("user_id") UUID userId
+    ) {
+        Page<StudentSubmissionPaginationDTO> moaIa = documentService.findSubmissionsByUserIdAndMoAIAType(
+                pageable,
+                userId,
+                status,
+                search
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(moaIa));
+    }
+
+    @GetMapping("/moa-ia/by-submission/{submission_id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
+    public Optional<MoAIADocumentDTO>  findMoAIADetailsBySubmissionId(
             @PathVariable("submission_id") UUID submissionId
     ) {
-        return documentService.findMoAIABySubmissionId(submissionId);
+        return documentService.findMoAIADetailsBySubmissionId(submissionId);
     }
 
     @PostMapping("")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> submitDocument(
+    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> submitDocument(
         @Valid @RequestBody DocumentSubmissionRequest request,
         @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         SubmissionModel submission = documentMapper.toModel(request);
 
         String userEmail = principal.getEmail();
-        documentService.saveDocument(
+        SubmissionModel createdSubmission = documentService.saveDocument(
                 submission,
                 userEmail,
                 request.getMoaIa()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(GlobalAPIResponse.success(createdSubmission, "Submission successfully created"));
+    }
+
+    @GetMapping("/partners")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
+    public ResponseEntity<GlobalAPIResponse<List<PartnerProfileDTO>>> getAllExistingPartners(
+            @RequestParam(value = "search", required = false)  String search
+    ) {
+        List<PartnerProfileDTO> partnerNames = documentService.findAllExistingPartners(search);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(partnerNames));
     }
 }

@@ -28,6 +28,7 @@ public class CustomUserPrincipal implements OidcUser {
         Set<GrantedAuthority> auths = new HashSet<>();
 
         String roleName = "ROLE_" + user.getRole().name().toUpperCase();
+        System.out.println("roleName: " + roleName);
         auths.add(new SimpleGrantedAuthority(roleName));
 
         return auths;

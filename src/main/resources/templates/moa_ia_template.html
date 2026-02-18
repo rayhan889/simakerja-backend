@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Perjanjian Kerja Sama MoA &amp; IA</title>
+    <style>
+        /* === PAGE SETUP === */
+        @page {
+            size: A4;
+            margin: 2.54cm; /* Standard 1-inch margin for formal documents */
+        }
+
+        body {
+            font-family: 'Book Antiqua', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* === HEADER SECTION === */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            align-items: center;
+        }
+
+        .logo-container {
+            margin: 0 auto 20px auto;
+            border-collapse: collapse;
+            position: absolute;
+            top: 40px;
+            width: 100vw;
+
+            tr {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+        }
+        .logo-container td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .logo {
+            width: 2.26cm;
+            height: 2.26cm;
+            object-fit: contain;
+        }
+
+        .header h1 {
+            font-size: 12pt;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .header h2 {
+            font-size: 12pt;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+
+        .header p {
+            font-size: 12pt;
+            margin: 3px 0;
+        }
+
+        /* === DOCUMENT NUMBERS === */
+        .document-number {
+            width: 100%;
+            margin: 20px 0;
+            font-weight: 600;
+            text-align: center;
+            padding-left: 5rem;
+        }
+
+        .document-number div {
+            text-align: left;
+            display: inline-block;
+            min-width: 300px;
+        }
+
+        /* === CONTENT SECTIONS === */
+        .content {
+            text-align: justify;
+        }
+
+        /* === PARTY INFORMATION === */
+        .parties {
+            margin: 0;
+        }
+
+        .party-info {
+            margin-left: 0;
+            margin-bottom: 10px;
+        }
+
+        .party-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .party-info td {
+            line-height: 20px;
+            vertical-align: top;
+        }
+
+        .party-info td:first-child {
+            width: 80px; /* Fixed width for labels (Nama, Jabatan, Alamat) */
+        }
+
+        .party-info td:nth-child(2) {
+            width: 15px; /* Narrow column for colon */
+            text-align: center;
+        }
+
+        .party-info td:nth-child(3) {
+            /* Value column takes remaining space */
+        }
+
+        /* === ARTICLE SECTIONS === */
+        .article {
+            margin: 20px 0;
+        }
+
+        .article-title {
+            text-align: center;
+            font-weight: 600;
+            margin: 15px 0 10px 0;
+        }
+
+        .article-content {
+            text-align: justify;
+            margin-bottom: 10px;
+        }
+
+        /* === NUMBERED LIST (for articles) === */
+        .numbered-list {
+            list-style: none;
+            counter-reset: item;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .numbered-list li {
+            counter-increment: item;
+            margin-left: 1.5cm; /* Indentation for list items */
+            position: relative;
+            margin-bottom: 8px; /* Space between items */
+            text-align: justify;
+        }
+
+        .numbered-list li::before {
+            content: "(" counter(item) ")";
+            position: absolute;
+            left: -1.2cm;
+            font-weight: normal;
+        }
+
+        /* === SIGNATURE SECTION === */
+        .signature-section {
+            margin-top: 50px;
+            page-break-inside: avoid; /* Prevent page break in middle of signatures */
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        .signature-table td {
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+            padding: 10px 20px; /* Added horizontal padding */
+        }
+
+        .signature-table .signature-box {
+            min-height: 80px; /* Space for actual signature */
+        }
+
+        .signature-table .name {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* === APPENDIX SECTION === */
+        .appendix {
+            page-break-before: always; /* Start on new page */
+            margin-top: 30px;
+        }
+
+        .appendix-title {
+            text-align: center;
+            font-weight: 600;
+            font-style: italic; /* Match "Lampiran" style from reference */
+            margin-bottom: 10px;
+        }
+
+        /* === DATA TABLE (Student List) === */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #000000;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top; /* Align content to top for multi-line cells */
+        }
+
+        .data-table th {
+            background-color: #ffffff; /* White background for cleaner look */
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* Column widths for data table */
+        .data-table th:nth-child(1),
+        .data-table td:nth-child(1) {
+            width: 40px;
+            text-align: center;
+        }
+
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            width: 25%; /* Nama Program Studi */
+        }
+
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) {
+            width: 20%; /* Unit/Bagian/Tempat */
+        }
+
+        .data-table th:nth-child(4),
+        .data-table td:nth-child(4) {
+            width: 30%; /* Nama Mahasiswa - wider for list */
+        }
+
+        .data-table th:nth-child(5),
+        .data-table td:nth-child(5) {
+            width: 100px;
+            text-align: center;
+        }
+
+        /* === UTILITY CLASSES === */
+        .indent {
+            margin-left: 40px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-bold {
+            font-weight: 600;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .uppercase-text {
+            text-transform: uppercase;
+        }
+
+        .paragprah-spacing-1x{
+            line-height: 20px;
+        }
+    </style>
+</head>
+<body>
+<!-- Header Section -->
+<div class="header">
+    <table class="logo-container">
+        <tr>
+            <td><img src="https://6qkjkznc7u.ufs.sh/f/BZUibzFdzcmfKJXx3Evdp46Qu2MZAeN9kXr5U7PGxbcHFTWE" alt="UNESA Logo" class="logo"/></td>
+            <td style="width: 30rem;"></td> <!-- Spacer -->
+            <td><img th:src="${partnerLogoUrl}" alt="Partner Logo" class="logo"/></td>
+        </tr>
+    </table>
+    <h1>
+        <span>Perjanjian Kerja Sama</span> <br/>
+        <i>(Memorandum of Agreement &amp; <br/> Implementation Arrangement)</i>
+    </h1>
+</div>
+
+<!-- Title Section -->
+<div class="text-center text-bold content">
+    <div class="uppercase-text">FAKULTAS <span th:text="${facultyName}">FAKULTAS</span></div>
+    <div>UNIVERSITAS NEGERI SURABAYA</div>
+    <p>DENGAN</p>
+    <div th:text="${partnerName}">Partner Name</div>
+    <p>TENTANG</p>
+    <div>IMPLEMENTASI KERJA SAMA BERDAMPAK DALAM PROGRAM TRI <br/> DHARMA PERGURUAN TINGGI MELALUI MOBILITAS AKADEMIK</div>
+</div>
+
+<!-- Document Numbers -->
+<div class="document-number">
+    <div>Nomor: <span th:text="${facultyNumber}"></span></div>
+    <div>Nomor: <span th:text="${partnerNumber}">PARTNER NUMBER</span></div>
+</div>
+
+<!-- Opening Statement -->
+<div class="content">
+    <p class="paragprah-spacing-1x">
+        Pada hari <b th:text="${day}">hari</b>, tanggal <b th:text="${date}">tanggal</b>,
+        bulan <b th:text="${month}">bulan</b>, tahun <b th:text="${yearInLongText}">dua ribu dua puluh enam</b>
+        <b th:text="${ddMMYYYYFormatDate}">dd-MM-YYYY</b>, yang bertanda tangan di bawah ini:
+    </p>
+</div>
+
+<!-- Party Information -->
+<div class="parties">
+    <!-- PIHAK KESATU -->
+    <div class="party-info">
+        <table>
+            <tr>
+                <td>Nama</td>
+                <td>:</td>
+                <td th:text="${facultyRepresentativeName}">Faculty Representative Name</td>
+            </tr>
+            <tr>
+                <td>Jabatan</td>
+                <td>:</td>
+                <td>Dekan Fakultas <span th:text="${facultyName}">Position</span></td>
+            </tr>
+            <tr>
+                <td>Alamat</td>
+                <td>:</td>
+                <td th:text="${facultyAddress}">Campus Address</td>
+            </tr>
+        </table>
+        <p class="paragprah-spacing-1x">
+            dalam hal ini bertindak untuk dan atas nama Fakultas <span th:text="${faculty}">Faculty</span>,
+            Universitas Negeri Surabaya (UNESA) selanjutnya disebut <strong>PIHAK KESATU</strong>.
+        </p>
+    </div>
+
+    <!-- PIHAK KEDUA -->
+    <div class="party-info mb-20">
+        <table>
+            <tr>
+                <td>Nama</td>
+                <td>:</td>
+                <td th:text="${partnerRepresentativeName}">Partner Representative Name</td>
+            </tr>
+            <tr>
+                <td>Jabatan</td>
+                <td>:</td>
+                <td th:text="${partnerRepresentativePosition}">Partner Position</td>
+            </tr>
+            <tr>
+                <td>Alamat</td>
+                <td>:</td>
+                <td th:text="${partnerAddress}">Partner Address</td>
+            </tr>
+        </table>
+        <p class="paragprah-spacing-1x">
+            dalam hal ini bertindak untuk dan atas nama <span th:text="${partnerName}" class="text-bold">Partner Name</span>,
+            selanjutnya disebut <strong>PIHAK KEDUA</strong>.
+        </p>
+    </div>
+
+    <div class="content">
+        <p class="paragprah-spacing-1x">
+            <strong>PARA PIHAK</strong> sepakat untuk mengadakan Perjanjian Kerja Sama (PKS) tentang
+            Implementasi Kerja Sama Berdampak dalam Program Tri Dharma Perguruan Tinggi melalui Mobilitas Akademik
+            yang selanjutnya disebut dengan Perjanjian Kerja Sama dengan ketentuan dan syarat-syarat sebagai berikut:
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 1 -->
+<div class="article">
+    <p class="article-title">PASAL 1<br/>KETENTUAN UMUM</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            <strong>PARA PIHAK</strong> sepakat mengadakan kerja sama dalam Implementasi Kerja Sama Berdampak
+            dalam Program Tri Dharma Perguruan Tinggi melalui Mobilitas Akademik yang saling menguntungkan
+            dengan tanpa mengurangi hak masing-masing.
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 2 -->
+<div class="article">
+    <p class="article-title">PASAL 2<br/>LINGKUP KERJA SAMA</p>
+    <div class="article-content">
+        <ol class="numbered-list">
+            <li class="paragprah-spacing-1x">
+                Ruang lingkup Perjanjian Kerja Sama ini meliputi Tri Dharma Perguruan Tinggi melalui
+                Mobilitas Akademik dalam Program <span th:text="${activityType}">Activity Type</span>
+            </li>
+            <li class="paragprah-spacing-1x">
+                Ruang lingkup Perjanjian Kerja sama ini akan dilaksanakan secara bertahap sesuai dengan
+                prioritas kebutuhan dan kesepakatan serta kemampuan dari <strong>PARA PIHAK</strong>
+            </li>
+        </ol>
+    </div>
+</div>
+
+<!-- PASAL 3 -->
+<div class="article">
+    <p class="article-title">PASAL 3<br/>PELAKSANAAN KEGIATAN</p>
+    <div class="article-content">
+        <ol class="numbered-list">
+            <li class="paragprah-spacing-1x">
+                Kegiatan ini dilakukan oleh Fakultas <span th:text="${faculty}">Faculty</span> di
+                <span th:text="${partnerName}">Partner Name</span> sesuai dengan visi dan misi kedua belah pihak,
+                adapun berikut rincian kegiatan:
+            </li>
+            <li class="paragprah-spacing-1x">
+                Program studi yang mahasiswanya melaksanakan kegiatan Mobilitas Akademik sebagaimana pada
+                Pasal 3 ayat (1) tersedia dalam lampiran yang tidak terpisahkan dari PKS ini.
+            </li>
+        </ol>
+    </div>
+</div>
+
+<!-- PASAL 4 -->
+<div class="article">
+    <p class="article-title">PASAL 4<br/>SARANA DAN PRASARANA</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            Kebutuhan sarana dan prasarana untuk pelaksanaan kerja sama ini disepakati oleh
+            <strong>PARA PIHAK</strong> berdasarkan hasil musyawarah mufakat atau ketentuan lain yang berlaku.
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 5 -->
+<div class="article">
+    <p class="article-title">PASAL 5<br/>PEMBIAYAAN</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            Kebutuhan pembiayaan dan dana untuk pelaksanaan kerja sama ini disepakati oleh
+            <strong>PARA PIHAK</strong> berdasarkan hasil musyawarah mufakat atau ketentuan lain yang berlaku.
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 6 -->
+<div class="article">
+    <p class="article-title">PASAL 6<br/>JANGKA WAKTU</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            Perjanjian Kerja Sama ini berlaku selama 1 (satu) tahun, dimulai dari tahap observasi,
+            penyesuaian dengan bidang keilmuan, penempatan di <b th:text="${partnerName}">Partner Name</b>,
+            hingga penyusunan laporan <span th:text="${activityType}">Activity Type</span>. Selanjutnya,
+            perjanjian ini akan dievaluasi dan dapat diperbarui sesuai dengan ketentuan yang berlaku
+            serta berdasarkan kesepakatan <strong>PARA PIHAK</strong>.
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 7 -->
+<div class="article">
+    <p class="article-title">PASAL 7<br/>PERSELISIHAN</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            Apabila timbul perselisihan dalam pelaksanaan maka penyelesaian akan dilakukan secara
+            musyawarah dan mufakat.
+        </p>
+    </div>
+</div>
+
+<!-- PASAL 8 -->
+<div class="article">
+    <p class="article-title">PASAL 8<br/>ADDENDUM</p>
+    <div class="article-content">
+        <ol class="numbered-list">
+            <li class="paragprah-spacing-1x">
+                <strong>PARA PIHAK</strong> bersepakat bahwa perjanjian ini dapat atau dievaluasi kembali,
+                apabila diperlukan dan bila ada perubahan atau ketentuan baru yang mendesak untuk dapat
+                diselesaikan segera oleh <strong>PARA PIHAK</strong> secara musyawarah dan mufakat.
+            </li>
+            <li class="paragprah-spacing-1x">
+                <strong>PARA PIHAK</strong> bersepakat bahwa beberapa syarat atau ketentuan yang belum
+                tercantum dalam perjanjian kerja sama ini akan diatur dan dicantumkan dalam suplemen atau
+                addendum yang merupakan bagian tak terpisahkan dalam perjanjian ini, dan ditandatangani
+                oleh <strong>PARA PIHAK</strong> diatas kertas bermeterai cukup.
+            </li>
+        </ol>
+    </div>
+</div>
+
+<!-- PASAL 9 -->
+<div class="article">
+    <p class="article-title">PASAL 9<br/>PENUTUP</p>
+    <div class="article-content">
+        <p class="paragprah-spacing-1x">
+            Perjanjian Pelaksanaan Kerja sama ini dibuat dan ditandatangani pada hari, tanggal, bulan dan
+            tahun tersebut di atas, dalam rangkap 2 (dua) bermeterai cukup masing-masing untuk
+            <strong>PIHAK KESATU</strong> dan <strong>PIHAK KEDUA</strong>. Segala ketentuan serta
+            syarat-syarat yang ada didalamnya berlaku serta mengikat bagi <strong>PARA PIHAK</strong>
+            yang menandatangani perjanjian ini.
+        </p>
+    </div>
+</div>
+
+<!-- Signature Section -->
+<div class="signature-section">
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div><strong>PIHAK KESATU</strong></div>
+                <div>Dekan Fakultas <span th:text="${facultyName}">Faculty</span></div>
+                <div>Universitas Negeri Surabaya</div>
+                <div class="signature-box"></div>
+                <p class="name" th:text="${facultyRepresentativeName}">Faculty Representative Name</p>
+            </td>
+            <td>
+                <div><strong>PIHAK KEDUA</strong></div>
+                <div th:text="${partnerRepresentativePosition}">Partner Representative Position</div>
+                <div th:text="${partnerName}">Partner Name</div>
+                <div class="signature-box"></div>
+                <p class="name" th:text="${partnerRepresentativeName}">Partner Representative Name</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Appendix / Lampiran -->
+<div class="appendix">
+    <p class="appendix-title">Lampiran</p>
+    <p class="mb-20 text-bold paragprah-spacing-1x">
+        Tabel Rincian Program Studi dan Mahasiswa Fakultas <span th:text="${faculty}">Faculty</span>
+        Universitas Negeri Surabaya yang melakukan Program <span th:text="${activityType}">Activity Type</span>
+        di <span th:text="${partnerName}">Partner Name</span>
+    </p>
+
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>No</th>
+            <th>Nama Program Studi</th>
+            <th>Unit/Bagian/Tempat</th>
+            <th>Nama Mahasiswa</th>
+            <th>Jumlah Mahasiswa</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="snapshot, iterStat : ${studentSnapshots}">
+            <td th:text="${iterStat.count}">1</td>
+            <td th:text="${snapshot.studyProgram}">Study Program</td>
+            <td th:text="${snapshot.unit}">Unit</td>
+            <td th:utext="${snapshot.students}">Student Names</td>
+            <td th:text="${snapshot.total}">Total</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
