@@ -2,6 +2,7 @@ package com.rynrama.simakerjabackend.repository;
 
 import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
 import com.rynrama.simakerjabackend.dto.MoAIADocumentDTO;
+import com.rynrama.simakerjabackend.dto.PartnerProfileDTO;
 import com.rynrama.simakerjabackend.model.MoAIAPDFViewModel;
 import com.rynrama.simakerjabackend.model.MoaIADocumentModel;
 import org.springframework.data.domain.Page;
@@ -75,4 +76,33 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
     select m.partnerLogoKey from MoaIADocumentModel m where m.partnerLogoKey is not null
 """)
     List<String> findAllPartnerLogoKeys();
+
+    @Query("""
+    select exists (
+        select 1 from MoaIADocumentModel m where lower(m.partnerName) like lower(concat('%', :partnerName, '%'))
+    )
+""")
+    Boolean isPartnerNameExists(String partnerName);
+
+    @Query("""
+    select distinct new com.rynrama.simakerjabackend.dto.PartnerProfileDTO(
+        m.partnerName,
+        m.partnerAddress,
+        m.partnerNumber,
+        m.partnerRepresentativeName,
+        m.partnerRepresentativePosition,
+        m.activityType,
+        m.partnerLogoKey,
+        m.facultyRepresentativeName
+    ) from MoaIADocumentModel m where :search is null or :search = '' or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
+""")
+    List<PartnerProfileDTO> findAllExistingPartners(String search);
+
+    @Query("""
+    select m from MoaIADocumentModel m
+        join fetch SubmissionModel s
+            on m.submission.id = s.id
+                where s.id = :submissionId
+""")
+    Optional<MoaIADocumentModel> findBySubmissionId(String submissionId);
 }

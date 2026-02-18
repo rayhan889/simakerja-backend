@@ -10,11 +10,13 @@ import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -138,12 +140,40 @@ public class DocumentSubmissionService {
     public void saveVisitRequestDocument() {
     }
 
-    public MoAIAPDFViewModel buildMoAIAData(UUID submissionId) throws Exception {
+//    teknik_informatika > Teknik Informatika
+    public static String formatString(String input) {
+        if (input == null || input.isBlank()) return input;
+
+        String[] words = input.replace("_", " ").toLowerCase().split(" ");
+        StringBuilder result = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1))
+                        .append(" ");
+            }
+        }
+
+        return result.toString().trim();
+    }
+
+//    for student snapshots: [dono, joko] > 1. Dono 2. Joko
+    public static String toNumberedHtmlList(List<String> items) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            result.append(i + 1).append(". ").append(items.get(i));
+            if (i < items.size() - 1) result.append("<br/>");
+        }
+        return result.toString();
+    }
+
+    public MoAIAPDFViewModel buildMoAIAData(String submissionId) throws Exception {
         MoAIAPDFViewModel data = new MoAIAPDFViewModel();
 
         MoaIADocumentModel moaIAData = moAIADocumentRepository.
-                findById(submissionId).
-                orElseThrow(() ->
+                findBySubmissionId(submissionId).
+            orElseThrow(() ->
                     new ResourceNotFoundException(
                             "MoA and IA document not found with submission id" + submissionId
                     )
@@ -162,7 +192,15 @@ public class DocumentSubmissionService {
         data.setPartnerNumber(moaIAData.getPartnerNumber());
         data.setPartnerRepresentativeName(moaIAData.getPartnerRepresentativeName());
         data.setPartnerRepresentativePosition(moaIAData.getPartnerRepresentativePosition());
-        data.setActivityType(moaIAData.getActivityType());
+        data.setPartnerAddress(moaIAData.getPartnerAddress());
+
+        String formattedActivityType = "";
+        switch (moaIAData.getActivityType()) {
+            case DocumentActivityType.internship -> formattedActivityType = "Magang";
+            case DocumentActivityType.kkn ->  formattedActivityType = "KKN";
+            case DocumentActivityType.plp ->   formattedActivityType = "PLP";
+        }
+        data.setActivityType(formattedActivityType);
 
         Instant submissionDate =  moaIAData.getSubmission().getSubmissionDate();
         ZonedDateTime zdt = submissionDate.atZone(zone);
@@ -186,7 +224,22 @@ public class DocumentSubmissionService {
         data.setYearInLongText(yearInLongText);
         data.setDdMMyyyyFormatDate(ddMMyyyFormatDate);
 
-        data.setStudentSnapshots(moaIAData.getStudentSnapshots());
+        List<StudentSnapshot> studentSnapshots = moaIAData.getStudentSnapshots();
+        List<StudentSnapshotDisplayDTO> displayStudentSnapshotsDTO = new ArrayList<>();
+        for (StudentSnapshot snapshot:  studentSnapshots) {
+
+            StudentSnapshotDisplayDTO snapShotDTO = new StudentSnapshotDisplayDTO(
+                    formatString(snapshot.getStudyProgram()),
+                    snapshot.getUnit(),
+                    toNumberedHtmlList(snapshot.getStudents()),
+                    snapshot.getTotal()
+            );
+            displayStudentSnapshotsDTO.add(snapShotDTO);
+        }
+
+        data.setUnesaLogoUrl(minioService.getPresignedUrl("unesa_logo.png"));
+
+        data.setStudentSnapshots(displayStudentSnapshotsDTO);
 
         return data;
     }

@@ -7,9 +7,11 @@ import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class StudentSubmissionPaginationDTO {
+    private String submissionId;
     private String partnerName;
     private String partnerNumber;
     private SubmissionStatus status;
@@ -19,6 +21,7 @@ public class StudentSubmissionPaginationDTO {
     private MoAIADocumentType documentType;
 
     public StudentSubmissionPaginationDTO(
+            String submissionId,
             String partnerName,
             String partnerNumber,
             SubmissionStatus status,
@@ -27,6 +30,7 @@ public class StudentSubmissionPaginationDTO {
             String notes,
             MoAIADocumentType documentType
     ) {
+        this.submissionId = submissionId;
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
         this.status = status;
@@ -37,6 +41,14 @@ public class StudentSubmissionPaginationDTO {
     }
 
     public StudentSubmissionPaginationDTO() {
+    }
+
+    public String getSubmissionId() {
+        return submissionId;
+    }
+
+    public void setSubmissionId(String submissionId) {
+        this.submissionId = submissionId;
     }
 
     public void setPartnerName(String partnerName) {

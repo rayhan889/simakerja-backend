@@ -35,6 +35,7 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
 
     @Query("""
     select new com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO(
+        s.id,
         m.partnerName,
         m.partnerNumber,
         s.status,
