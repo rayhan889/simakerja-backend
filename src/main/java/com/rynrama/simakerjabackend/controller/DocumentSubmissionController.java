@@ -130,4 +130,19 @@ public class DocumentSubmissionController {
                 .status(HttpStatus.OK)
                 .body(GlobalAPIResponse.success(partnerNames));
     }
+
+
+    @PutMapping("/{submission_id}")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateDocument(
+        @Valid @RequestBody DocumentUpdateRequest request,
+        @PathVariable("submission_id") String submissionId
+    ) throws Exception {
+
+        SubmissionModel submission = documentService.updateDocument(request, submissionId);
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(GlobalAPIResponse.success(submission));
+    }
 }

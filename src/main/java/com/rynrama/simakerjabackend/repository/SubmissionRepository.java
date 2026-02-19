@@ -4,11 +4,13 @@ import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
 import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUID> {
@@ -60,4 +62,9 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
             @Param("status") String status,
             @Param("search") String search
     );
+
+    @Query("""
+    select s from SubmissionModel s where s.id = :id
+""")
+    Optional<SubmissionModel> findById(String id);
 }
