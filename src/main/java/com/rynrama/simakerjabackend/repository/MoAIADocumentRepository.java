@@ -25,14 +25,16 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
             m.facultyRepresentativeName,
             m.partnerRepresentativeName,
             m.partnerRepresentativePosition,
-            m.studentSnapshots,
             m.activityType,
-            m.documentType
+            m.documentType,
+            m.studentSnapshots,
+            m.partnerAddress,
+            m.partnerLogoKey
         )
         from MoaIADocumentModel m
             where m.submission.id = :submissionId
     """)
-    Optional<MoAIADocumentDTO> findAllMoAIABySubmissionId(@Param("submissionId") UUID submissionId);
+    Optional<MoAIADocumentDTO> findAllMoAIABySubmissionId(@Param("submissionId") String submissionId);
 
     @Query("""
         select new com.rynrama.simakerjabackend.dto.MoAIADocumentDTO(
@@ -41,9 +43,11 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
             m.facultyRepresentativeName,
             m.partnerRepresentativeName,
             m.partnerRepresentativePosition,
-            m.studentSnapshots,
             m.activityType,
-            m.documentType
+            m.documentType,
+            m.studentSnapshots,
+            m.partnerAddress,
+            m.partnerLogoKey
         )
         from MoaIADocumentModel m
             left join m.submission s
