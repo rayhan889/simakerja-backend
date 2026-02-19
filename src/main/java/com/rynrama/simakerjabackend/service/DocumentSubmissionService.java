@@ -245,8 +245,8 @@ public class DocumentSubmissionService {
         return data;
     }
 
-    public List<PartnerProfileDTO> findAllExistingPartners(String search) {
-        return moAIADocumentRepository.findAllExistingPartners(search);
+    public List<PartnerProfileDTO> findAllVerifiedExistingPartners(String search) {
+        return moAIADocumentRepository.findAllVerifiedExistingPartners(search);
     }
 
     @Transactional

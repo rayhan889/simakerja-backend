@@ -94,9 +94,16 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
         m.activityType,
         m.partnerLogoKey,
         m.facultyRepresentativeName
-    ) from MoaIADocumentModel m where :search is null or :search = '' or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
+    ) from MoaIADocumentModel m\s
+        left join SubmissionModel s on m.submission.id = s.id
+            where (
+                :search is null\s
+                or :search = ''\s
+                or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
+            )
+            and s.status IN ('verified_adhoc', 'verified_staff', 'completed')
 """)
-    List<PartnerProfileDTO> findAllExistingPartners(String search);
+    List<PartnerProfileDTO> findAllVerifiedExistingPartners(String search);
 
     @Query("""
     select m from MoaIADocumentModel m
