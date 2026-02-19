@@ -67,7 +67,7 @@ public class OAuth2UserService extends OidcUserService {
         user.setCreatedAt(Instant.now());
 
         if (!isMhs(oidcUser)) {
-            user.setRole(UserRole.lecturer);
+            user.setRole(UserRole.staff);
         } else {
             user.setRole(UserRole.student);
         }
