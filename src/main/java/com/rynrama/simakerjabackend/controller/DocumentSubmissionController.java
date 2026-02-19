@@ -121,13 +121,28 @@ public class DocumentSubmissionController {
 
     @GetMapping("/partners")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
-    public ResponseEntity<GlobalAPIResponse<List<PartnerProfileDTO>>> getAllExistingPartners(
+    public ResponseEntity<GlobalAPIResponse<List<PartnerProfileDTO>>> getAllVerifiedExistingPartners(
             @RequestParam(value = "search", required = false)  String search
     ) {
-        List<PartnerProfileDTO> partnerNames = documentService.findAllExistingPartners(search);
+        List<PartnerProfileDTO> partnerNames = documentService.findAllVerifiedExistingPartners(search);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(GlobalAPIResponse.success(partnerNames));
+    }
+
+
+    @PutMapping("/{submission_id}")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateDocument(
+        @Valid @RequestBody DocumentUpdateRequest request,
+        @PathVariable("submission_id") String submissionId
+    ) throws Exception {
+
+        SubmissionModel submission = documentService.updateDocument(request, submissionId);
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(GlobalAPIResponse.success(submission));
     }
 }

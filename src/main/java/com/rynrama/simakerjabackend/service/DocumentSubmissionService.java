@@ -10,6 +10,7 @@ import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
+import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -244,8 +245,66 @@ public class DocumentSubmissionService {
         return data;
     }
 
-    public List<PartnerProfileDTO> findAllExistingPartners(String search) {
-        return moAIADocumentRepository.findAllExistingPartners(search);
+    public List<PartnerProfileDTO> findAllVerifiedExistingPartners(String search) {
+        return moAIADocumentRepository.findAllVerifiedExistingPartners(search);
+    }
+
+    @Transactional
+    public SubmissionModel updateDocument(
+            DocumentUpdateRequest request,
+            String submissionId
+    ) throws Exception {
+        SubmissionModel submission = submissionRepository
+                .findById(submissionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Submission with id: " + submissionId + " not found"
+                        )
+                );
+
+        submission.setNotes(request.getNotes());
+
+        if (
+                submission.getStatus() == SubmissionStatus.verified_adhoc ||
+                        submission.getStatus() == SubmissionStatus.completed ||
+                            submission.getStatus() == SubmissionStatus.verified_staff
+        ) {
+            throw new BadRequestException("moaIa already verified/completed by staff/adhoc");
+        }
+
+        switch (submission.getSubmissionType()) {
+            case SubmissionType.moa_ia -> {
+                if (request.getMoaIa() == null) {
+                    throw new BadRequestException("moaIa is required");
+                }
+                updateMoaIa(request.getMoaIa(), submission.getId());
+            }
+        }
+
+        return submission;
+    }
+
+    public void updateMoaIa(
+            MoAIADocumentUpdateRequest request,
+            String submissionId
+    ) {
+        MoaIADocumentModel moaIa = moAIADocumentRepository
+                .findBySubmissionId(submissionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Moa IA with submission id: " + submissionId + " not found"
+                        )
+                );
+
+        moaIa.setPartnerName(request.getPartnerName());
+        moaIa.setPartnerNumber(request.getPartnerNumber());
+        moaIa.setFacultyRepresentativeName(request.getFacultyRepresentativeName());
+        moaIa.setPartnerRepresentativeName(request.getPartnerRepresentativeName());
+        moaIa.setPartnerRepresentativePosition(request.getPartnerRepresentativePosition());
+        moaIa.setActivityType(request.getActivityType());
+        moaIa.setStudentSnapshots(request.getStudentSnapshots());
+        moaIa.setPartnerAddress(request.getPartnerAddress());
+        moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
     }
 
 }
