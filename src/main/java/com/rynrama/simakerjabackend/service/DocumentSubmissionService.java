@@ -53,9 +53,38 @@ public class DocumentSubmissionService {
                 subsType
         );
     }
+    public DocumentDetails findSubmissionDetailsBySubmissionId(String submissionId) {
+        SubmissionModel submission = submissionRepository
+                .findById(submissionId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Submission with id: " + submissionId + " not found"
+                ));
 
-    public Optional<MoAIADocumentDTO> findMoAIADetailsBySubmissionId(UUID submissionId) {
-        return moAIADocumentRepository.findAllMoAIABySubmissionId(submissionId);
+        return switch (submission.getSubmissionType()) {
+            case moa_ia -> moAIADocumentRepository
+                    .findAllMoAIABySubmissionId(submissionId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "MoA/IA document not found for submission id: " + submissionId
+                    ));
+
+            case cooperation_request ->
+                // TODO: Implement when CooperationRequestDTO and repository exist
+                    throw new UnsupportedOperationException(
+                            "Cooperation request details not yet implemented"
+                    );
+
+            case mou_request ->
+                // TODO: Implement when MouRequestDTO and repository exist
+                    throw new UnsupportedOperationException(
+                            "MoU request details not yet implemented"
+                    );
+
+            case visit_request ->
+                // TODO: Implement when VisitRequestDTO and repository exist
+                    throw new UnsupportedOperationException(
+                            "Visit request details not yet implemented"
+                    );
+        };
     }
 
     public Page<MoAIADocumentDTO> findPaginatedMoAIA(
