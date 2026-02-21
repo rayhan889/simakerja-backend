@@ -1,5 +1,7 @@
 package com.rynrama.simakerjabackend.model;
 
+import com.rynrama.simakerjabackend.dto.StudentInfo;
+import jakarta.validation.Valid;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.*;
@@ -11,9 +13,9 @@ public class StudentSnapshot {
     @NotNull
     private String studyProgram;
 
-    @NotNull
+    @Valid
     @Size(min = 1, max = 3, message = "students must contain between 1 and 3 items")
-    private List<@NotBlank @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use special characters")String> students;
+    private List<StudentInfo> students;
 
     @NotNull
     @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
@@ -31,11 +33,11 @@ public class StudentSnapshot {
         this.studyProgram = studyProgram;
     }
 
-    public List<String> getStudents() {
+    public List<StudentInfo> getStudents() {
         return students;
     }
 
-    public void setStudents(List<String> students) {
+    public void setStudents(List<StudentInfo> students) {
         this.students = students;
     }
 

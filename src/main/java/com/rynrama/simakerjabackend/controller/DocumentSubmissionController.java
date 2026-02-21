@@ -108,7 +108,7 @@ public class DocumentSubmissionController {
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> submitDocument(
         @Valid @RequestBody DocumentSubmissionRequest request,
         @AuthenticationPrincipal CustomUserPrincipal principal
-    ) {
+    ) throws Exception {
         SubmissionModel submission = documentMapper.toModel(request);
 
         String userEmail = principal.getEmail();

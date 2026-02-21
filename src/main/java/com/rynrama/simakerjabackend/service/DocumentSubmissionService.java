@@ -7,6 +7,7 @@ import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
+import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
@@ -122,7 +123,7 @@ public class DocumentSubmissionService {
             SubmissionModel submission,
             String userEmail,
             MoaIADocumentRequest moaIADocumentRequest
-    ){
+    ) throws Exception {
         NumericRandomGenerator numericRandomGenerator = new NumericRandomGenerator();
 
         submission.setSubmissionCode(numericRandomGenerator.generate(20));
@@ -151,8 +152,8 @@ public class DocumentSubmissionService {
     public void saveMoaIADocument(
             SubmissionModel submission,
             MoaIADocumentRequest moaIADocumentRequest
-    ) {
-        MoaIADocumentModel moaIADocument = new MoaIADocumentModel();
+    ) throws Exception {
+        var moaIADocument = new MoaIADocumentModel();
 
         moaIADocument.setSubmission(submission);
         moaIADocument.setDocumentType(moaIADocumentRequest.getDocumentType());
@@ -162,6 +163,7 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativeName(moaIADocumentRequest.getPartnerRepresentativeName());
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
+
         moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
         moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
         moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
@@ -197,10 +199,10 @@ public class DocumentSubmissionService {
     }
 
 //    for student snapshots: [dono, joko] > 1. Dono 2. Joko
-    public static String toNumberedHtmlList(List<String> items) {
+    public static String toNumberedHtmlList(List<StudentInfo> items) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < items.size(); i++) {
-            result.append(i + 1).append(". ").append(items.get(i));
+            result.append(i + 1).append(". ").append(items.get(i).getFullName());
             if (i < items.size() - 1) result.append("<br/>");
         }
         return result.toString();
