@@ -67,4 +67,11 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
     select s from SubmissionModel s where s.id = :id
 """)
     Optional<SubmissionModel> findById(String id);
+
+    @Query("""
+        select s from SubmissionModel s
+            join fetch s.user
+                where s.id = :submissionId
+    """)
+    Optional<SubmissionModel> findByIdWithUser(@Param("submissionId") String submissionId);
 }

@@ -1,17 +1,18 @@
 package com.rynrama.simakerjabackend.controller;
 
 import com.rynrama.simakerjabackend.dto.FileUploadResponse;
+import com.rynrama.simakerjabackend.dto.GetPresignedUrlRequest;
 import com.rynrama.simakerjabackend.service.MinioService;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/uploads")
@@ -49,5 +50,18 @@ public class FileUploadController {
                     .body(GlobalAPIResponse.error(e.getMessage()));
         }
 
+    }
+
+    @PostMapping("/partner-logo/get-url")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<GlobalAPIResponse<String>> getPresignedUrl(
+            @Valid @RequestBody GetPresignedUrlRequest request
+    ) throws Exception {
+
+        String presignedUrl = minioService.getPresignedUrl(request.getObjectKey());
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(presignedUrl));
     }
 }
