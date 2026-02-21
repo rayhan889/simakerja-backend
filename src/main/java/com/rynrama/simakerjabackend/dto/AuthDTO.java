@@ -15,16 +15,9 @@ public class AuthDTO {
     private UserRole role;
     private String status;
     private String profilePicture;
-
-    public AuthDTO(UUID id, String email, String fullName, String phoneNumber, UserRole role, String status,  String profilePicture) {
-        this.id = id;
-        this.email = email;
-        this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-        this.status = status;
-        this.profilePicture = profilePicture;
-    }
+    private String studyProgram;
+    private String nim;
+    private String nip;
 
     public AuthDTO() {
     }
@@ -83,5 +76,29 @@ public class AuthDTO {
 
     public UUID getId() {
         return id;
+    }
+
+    public String getStudyProgram() {
+        return studyProgram;
+    }
+
+    public void setStudyProgram(String studyProgram) {
+        this.studyProgram = studyProgram;
+    }
+
+    public String getNim() {
+        return nim;
+    }
+
+    public void setNim(String nim) {
+        this.nim = nim;
+    }
+
+    public String getNip() {
+        return nip;
+    }
+
+    public void setNip(String nip) {
+        this.nip = nip;
     }
 }

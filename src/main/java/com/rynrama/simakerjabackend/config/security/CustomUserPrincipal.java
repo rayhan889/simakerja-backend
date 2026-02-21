@@ -1,5 +1,7 @@
 package com.rynrama.simakerjabackend.config.security;
 
+import com.rynrama.simakerjabackend.model.StaffModel;
+import com.rynrama.simakerjabackend.model.StudentModel;
 import com.rynrama.simakerjabackend.model.UserModel;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,10 +20,20 @@ public class CustomUserPrincipal implements OidcUser {
     private final UserModel user;
     private final Set<GrantedAuthority> authorities;
 
-    public CustomUserPrincipal(OidcUser oidcUser, UserModel user) {
+    private final StudentModel student;
+    private final StaffModel staff;
+
+    public CustomUserPrincipal(
+            OidcUser oidcUser,
+            UserModel user,
+            StudentModel student,
+            StaffModel staff
+    ) {
         this.oidcUser = oidcUser;
         this.user = user;
         this.authorities = buildAuthorities();
+        this.student = student;
+        this.staff = staff;
     }
 
     private Set<GrantedAuthority> buildAuthorities() {
@@ -78,5 +90,25 @@ public class CustomUserPrincipal implements OidcUser {
 
     public String getSubject() {
         return oidcUser.getSubject();
+    }
+
+    public StudentModel getStudent() {
+        return student;
+    }
+
+    public StaffModel getStaff() {
+        return staff;
+    }
+
+    public String getNim() {
+        return student != null ? student.getNim() : null;
+    }
+
+    public String getStudyProgram() {
+        return student != null ? student.getStudyProgram() : null;
+    }
+
+    public String getNip() {
+        return staff != null ? staff.getNip() : null;
     }
 }
