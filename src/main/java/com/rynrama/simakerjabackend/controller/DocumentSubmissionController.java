@@ -93,10 +93,10 @@ public class DocumentSubmissionController {
 
     @GetMapping("/details/{submission_id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
-    public ResponseEntity<GlobalAPIResponse<DocumentDetails>>  findMoAIADetailsBySubmissionId(
+    public ResponseEntity<GlobalAPIResponse<DocumentSubmissionDTO>>  findSubmissionDetails(
             @PathVariable("submission_id") String submissionId
     ) {
-        DocumentDetails details = documentService.findSubmissionDetailsBySubmissionId(submissionId);
+        DocumentSubmissionDTO details = documentService.findSubmissionDetailsBySubmissionId(submissionId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

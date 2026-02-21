@@ -4,6 +4,7 @@ import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
+import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
@@ -29,17 +30,20 @@ public class DocumentSubmissionService {
     private final MoAIADocumentRepository moAIADocumentRepository;
     private final UserRepository userRepository;
     private final MinioService minioService;
+    private final DocumentSubmissionMapper documentSubmissionMapper;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
             UserRepository userRepository,
-            MinioService minioService
+            MinioService minioService,
+            DocumentSubmissionMapper documentSubmissionMapper
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
         this.minioService = minioService;
+        this.documentSubmissionMapper = documentSubmissionMapper;
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -53,19 +57,23 @@ public class DocumentSubmissionService {
                 subsType
         );
     }
-    public DocumentDetails findSubmissionDetailsBySubmissionId(String submissionId) {
+    public DocumentSubmissionDTO findSubmissionDetailsBySubmissionId(String submissionId) {
         SubmissionModel submission = submissionRepository
-                .findById(submissionId)
+                .findByIdWithUser(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Submission with id: " + submissionId + " not found"
                 ));
 
         return switch (submission.getSubmissionType()) {
-            case moa_ia -> moAIADocumentRepository
-                    .findAllMoAIABySubmissionId(submissionId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "MoA/IA document not found for submission id: " + submissionId
-                    ));
+            case moa_ia -> {
+                MoaIADocumentModel moaIaDoc = moAIADocumentRepository
+                        .findBySubmissionId(submissionId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "MoA/IA document not found for submission id: " + submissionId
+                        ));
+
+                yield documentSubmissionMapper.toDetailDTO(submission, moaIaDoc);
+            }
 
             case cooperation_request ->
                 // TODO: Implement when CooperationRequestDTO and repository exist
