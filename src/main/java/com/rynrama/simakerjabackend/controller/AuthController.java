@@ -21,6 +21,7 @@ public class AuthController {
     public ResponseEntity<GlobalAPIResponse<AuthDTO>> me(@AuthenticationPrincipal CustomUserPrincipal principal){
         AuthDTO authInfo = new AuthDTO();
 
+//        Base User
         authInfo.setId(principal.getUser().getId());
         authInfo.setEmail(principal.getEmail());
         authInfo.setFullName(principal.getFullName());
@@ -28,6 +29,13 @@ public class AuthController {
         authInfo.setRole(principal.getUser().getRole());
         authInfo.setStatus(principal.getUser().getStatus());
         authInfo.setProfilePicture(principal.getPicture());
+
+//        Student
+        authInfo.setNim(principal.getNim());
+        authInfo.setStudyProgram(principal.getStudyProgram());
+
+//        Staff
+        authInfo.setNip(principal.getNip());
 
         return ResponseEntity
                 .status(HttpStatus.OK)

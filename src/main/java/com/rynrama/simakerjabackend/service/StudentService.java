@@ -9,6 +9,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,5 +38,9 @@ public class StudentService {
         student.setStudyProgram(request.getStudyProgram());
 
         return student;
+    }
+
+    public Optional<StudentModel> findStudentByUserId(UUID userId) {
+        return studentRepo.findByUserId(userId);
     }
 }

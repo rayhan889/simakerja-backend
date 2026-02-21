@@ -2,10 +2,7 @@ package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.model.*;
-import com.rynrama.simakerjabackend.repository.LecturerRepository;
-import com.rynrama.simakerjabackend.repository.OAuthIdentityRepository;
-import com.rynrama.simakerjabackend.repository.StudentRepository;
-import com.rynrama.simakerjabackend.repository.UserRepository;
+import com.rynrama.simakerjabackend.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -25,18 +22,20 @@ public class OAuth2UserService extends OidcUserService {
     private final OAuthIdentityRepository oauthIdentityRepository;
     private final LecturerRepository lecturerRepository;
     private final StudentRepository studentRepository;
-
+    private final StaffRepository staffRepository;
 
     public OAuth2UserService(
             UserRepository userRepository,
             OAuthIdentityRepository oauthIdentityRepository,
             LecturerRepository lecturerRepository,
-            StudentRepository studentRepository
+            StudentRepository studentRepository,
+            StaffRepository staffRepository
     ) {
         this.userRepository = userRepository;
         this.oauthIdentityRepository = oauthIdentityRepository;
         this.lecturerRepository = lecturerRepository;
         this.studentRepository = studentRepository;
+        this.staffRepository = staffRepository;
     }
 
     @Override
@@ -56,7 +55,15 @@ public class OAuth2UserService extends OidcUserService {
             throw new OAuth2AuthenticationException("User is inactive");
         }
 
-        return new CustomUserPrincipal(oidcUser, user);
+        StudentModel student = null;
+        StaffModel staff = null;
+
+        switch (user.getRole()) {
+            case student -> student = studentRepository.findByUserId(user.getId()).orElse(null);
+            case staff -> staff = staffRepository.findByUserId(user.getId()).orElse(null);
+        }
+
+        return new CustomUserPrincipal(oidcUser, user, student, staff);
     }
 
     private OauthIdentityModel createUser(OidcUser oidcUser){
@@ -74,16 +81,18 @@ public class OAuth2UserService extends OidcUserService {
 
         userRepository.save(user);
 
-        if (user.getRole() == UserRole.lecturer) {
-            LecturerModel lecturer = new LecturerModel();
-            lecturer.setUser(user);
-
-            lecturerRepository.save(lecturer);
-        } else {
+        if (user.getRole() == UserRole.student) {
             StudentModel student = new StudentModel();
             student.setUser(user);
-
             studentRepository.save(student);
+        } else if (user.getRole() == UserRole.staff) {
+            StaffModel staff = new StaffModel();
+            staff.setUser(user);
+            staffRepository.save(staff);
+        } else if (user.getRole() == UserRole.lecturer) {
+            LecturerModel lecturer = new LecturerModel();
+            lecturer.setUser(user);
+            lecturerRepository.save(lecturer);
         }
 
 //        OAuthIdentityModel creation
