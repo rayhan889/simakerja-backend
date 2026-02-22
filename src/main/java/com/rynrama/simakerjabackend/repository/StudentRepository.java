@@ -48,7 +48,7 @@ public interface StudentRepository extends JpaRepository<StudentModel, UUID> {
             )
                 from StudentModel s
                     join UserModel u on s.user.id = u.id
-                        where u.id = :id
+                        where u.id = :userId
     """)
     Boolean isStudentValid(UUID userId);
 }

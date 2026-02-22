@@ -137,7 +137,7 @@ public class DocumentSubmissionService {
                                 "user with email" + userEmail + " not found"
                         ));
 
-        if (isStudentValid(user.getId())) {
+        if (!isStudentValid(user.getId())) {
             throw new StudentNotValidException(
                     "student not have a valid nim and study program yet. Set it first"
             );
