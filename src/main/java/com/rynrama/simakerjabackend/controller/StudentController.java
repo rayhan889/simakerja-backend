@@ -40,10 +40,14 @@ public class StudentController {
 
     @GetMapping("/registered")
     public ResponseEntity<GlobalAPIResponse<List<StudentInfo>>> getAllRegisteredStudents(
-            @RequestParam(value = "exclude_nim", required = false) String excludeNim
+            @RequestParam(value = "exclude_nim", required = false) String excludeNim,
+            @RequestParam(value = "study_program", required = false) String studyProgram
     ) {
 
-        var students = studentService.findAllRegisteredStudents(excludeNim);
+        var students = studentService.findAllRegisteredStudents(
+                excludeNim,
+                studyProgram
+        );
 
         return ResponseEntity
                 .status(HttpStatus.OK)

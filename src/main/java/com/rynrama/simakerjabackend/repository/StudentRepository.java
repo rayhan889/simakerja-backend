@@ -33,8 +33,12 @@ public interface StudentRepository extends JpaRepository<StudentModel, UUID> {
                                     :excludeNim is null or :excludeNim = ''
                                         or s.nim <> :excludeNim
                                 )
+                                    and (
+                                        :studyProgram is null or :studyProgram = ''
+                                            or s.studyProgram = :studyProgram
+                                        )
     """)
-    List<StudentInfo> findAllRegisteredStudents(String excludeNim);
+    List<StudentInfo> findAllRegisteredStudents(String excludeNim, String studyProgram);
 
     @Query("""
         select (

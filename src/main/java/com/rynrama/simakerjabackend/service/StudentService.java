@@ -46,7 +46,7 @@ public class StudentService {
         return studentRepo.findByUserId(userId);
     }
 
-    public List<StudentInfo> findAllRegisteredStudents(String excludeNim) {
-        return studentRepo.findAllRegisteredStudents(excludeNim);
+    public List<StudentInfo> findAllRegisteredStudents(String excludeNim, String studyProgram) {
+        return studentRepo.findAllRegisteredStudents(excludeNim, studyProgram);
     }
 }
