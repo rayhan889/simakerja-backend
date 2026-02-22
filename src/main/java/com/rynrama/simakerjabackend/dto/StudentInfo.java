@@ -24,6 +24,12 @@ public class StudentInfo {
     public StudentInfo() {
     }
 
+    public StudentInfo(String fullName, String email, String nim) {
+        this.fullName = fullName;
+        this.email = email;
+        this.nim = nim;
+    }
+
     public String getFullName() {
         return fullName;
     }
