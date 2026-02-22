@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +103,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<GlobalAPIResponse<Object>> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(GlobalAPIResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(StudentNotValidException.class)
+    public ResponseEntity<GlobalAPIResponse<Object>> handleStudentNotValid(ResourceNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(GlobalAPIResponse.error(ex.getMessage()));
     }
 }

@@ -3,6 +3,7 @@ package com.rynrama.simakerjabackend.service;
 import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
+import com.rynrama.simakerjabackend.exception.StudentNotValidException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.*;
@@ -32,19 +33,22 @@ public class DocumentSubmissionService {
     private final UserRepository userRepository;
     private final MinioService minioService;
     private final DocumentSubmissionMapper documentSubmissionMapper;
+    private final StudentRepository studentRepository;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
             UserRepository userRepository,
             MinioService minioService,
-            DocumentSubmissionMapper documentSubmissionMapper
+            DocumentSubmissionMapper documentSubmissionMapper,
+            StudentRepository studentRepository
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
         this.minioService = minioService;
         this.documentSubmissionMapper = documentSubmissionMapper;
+        this.studentRepository = studentRepository;
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -132,6 +136,13 @@ public class DocumentSubmissionService {
                         .orElseThrow(() -> new UserNotFoundException(
                                 "user with email" + userEmail + " not found"
                         ));
+
+        if (isStudentValid(user.getId())) {
+            throw new StudentNotValidException(
+                    "student not have a valid nim and study program yet. Set it first"
+            );
+        }
+
         submission.setUser(user);
         submission.setSubmissionDate(Instant.now());
         submission.setCreatedAt(Instant.now());
@@ -149,7 +160,11 @@ public class DocumentSubmissionService {
         return submission;
     }
 
-    public void saveMoaIADocument(
+    private Boolean isStudentValid(UUID userId) {
+        return studentRepository.isStudentValid(userId);
+    }
+
+    private void saveMoaIADocument(
             SubmissionModel submission,
             MoaIADocumentRequest moaIADocumentRequest
     ) throws Exception {
@@ -171,17 +186,17 @@ public class DocumentSubmissionService {
         moAIADocumentRepository.save(moaIADocument);
     }
 
-    public void saveCooperationRequestDocument() {
+    private void saveCooperationRequestDocument() {
     }
 
-    public void saveMouRequestDocument() {
+    private void saveMouRequestDocument() {
     }
 
-    public void saveVisitRequestDocument() {
+    private void saveVisitRequestDocument() {
     }
 
 //    teknik_informatika > Teknik Informatika
-    public static String formatString(String input) {
+    private static String formatString(String input) {
         if (input == null || input.isBlank()) return input;
 
         String[] words = input.replace("_", " ").toLowerCase().split(" ");
@@ -199,7 +214,7 @@ public class DocumentSubmissionService {
     }
 
 //    for student snapshots: [dono, joko] > 1. Dono 2. Joko
-    public static String toNumberedHtmlList(List<StudentInfo> items) {
+    private static String toNumberedHtmlList(List<StudentInfo> items) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < items.size(); i++) {
             result.append(i + 1).append(". ").append(items.get(i).getFullName());
