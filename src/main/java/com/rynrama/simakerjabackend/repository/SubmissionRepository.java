@@ -37,6 +37,9 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
 
     @Query("""
     select new com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO(
+        s.user.id,
+        s.user.fullName,
+        st.nim,
         s.id,
         m.partnerName,
         m.partnerNumber,
@@ -47,9 +50,15 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
         m.documentType
     )
     from SubmissionModel s
-        left join MoaIADocumentModel m
-            on s.id = m.submission.id
-                where s.user.id = :userId
+        left join MoaIADocumentModel m on s.id = m.submission.id
+            join StudentModel st on s.user.id = st.user.id
+                where (
+                s.user.id = :userId or exists (
+                                        select 1 from StudentSnapshotModel ss
+                                            join ss.students sss
+                                        where ss.document.id = m.id and sss.nim = :nim
+                                    )
+                )
                     and ( :status is null or :status = '' or s.status = :status )
                     and ( :search is null or :search = ''
                             or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
@@ -60,7 +69,8 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
             Pageable pageable,
             @Param("userId") UUID userId,
             @Param("status") String status,
-            @Param("search") String search
+            @Param("search") String search,
+            @Param("nim") String nim
     );
 
     @Query("""

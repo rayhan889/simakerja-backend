@@ -11,6 +11,9 @@ import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
 public class StudentSubmissionPaginationDTO {
+    private UUID applicantId;
+    private String applicantName;
+    private String applicantNim;
     private String submissionId;
     private String partnerName;
     private String partnerNumber;
@@ -21,6 +24,9 @@ public class StudentSubmissionPaginationDTO {
     private MoAIADocumentType documentType;
 
     public StudentSubmissionPaginationDTO(
+            UUID applicantId,
+            String applicantName,
+            String applicantNim,
             String submissionId,
             String partnerName,
             String partnerNumber,
@@ -30,6 +36,9 @@ public class StudentSubmissionPaginationDTO {
             String notes,
             MoAIADocumentType documentType
     ) {
+        this.applicantId = applicantId;
+        this.applicantName = applicantName;
+        this.applicantNim = applicantNim;
         this.submissionId = submissionId;
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
@@ -105,5 +114,29 @@ public class StudentSubmissionPaginationDTO {
 
     public void setDocumentType(MoAIADocumentType documentType) {
         this.documentType = documentType;
+    }
+
+    public UUID getApplicantId() {
+        return applicantId;
+    }
+
+    public void setApplicantId(UUID applicantId) {
+        this.applicantId = applicantId;
+    }
+
+    public String getApplicantName() {
+        return applicantName;
+    }
+
+    public void setApplicantName(String applicantName) {
+        this.applicantName = applicantName;
+    }
+
+    public String getApplicantNim() {
+        return applicantNim;
+    }
+
+    public void setApplicantNim(String applicantNim) {
+        this.applicantNim = applicantNim;
     }
 }
