@@ -32,7 +32,7 @@ public class GenerateFileController {
         this.documentSubmissionService = documentSubmissionService;
     }
 
-    @GetMapping("/moa-ia/{submission_id}")
+    @GetMapping(value = "/moa-ia/{submission_id}", produces = MediaType.APPLICATION_PDF_VALUE)
     @PreAuthorize("hasAnyRole('STUDENT', 'STAFF')")
     public ResponseEntity<byte[]> generateFile(
         @PathVariable("submission_id") String submissionId,
