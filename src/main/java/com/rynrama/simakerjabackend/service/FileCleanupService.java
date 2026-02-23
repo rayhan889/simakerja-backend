@@ -34,7 +34,7 @@ public class FileCleanupService {
     }
 
 //    @Scheduled(cron = "0 0 */6 * * ?")
-    @Scheduled(cron = "0 * * * * *") // test only
+    @Scheduled(cron =  "0 0 */6 * * ?") // test only
     public void cleanupPartnerLogos() {
         if (!cleanupEnabled) {
             logger.debug("cleanupPartnerLogos is disabled, skipping");

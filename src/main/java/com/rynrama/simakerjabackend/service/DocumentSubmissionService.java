@@ -3,10 +3,14 @@ package com.rynrama.simakerjabackend.service;
 import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
+import com.rynrama.simakerjabackend.exception.StudentNotValidException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
+import com.rynrama.simakerjabackend.mapper.MoAIADocumentMapper;
+import com.rynrama.simakerjabackend.mapper.StudentSnapshotMapper;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
+import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
@@ -31,19 +35,25 @@ public class DocumentSubmissionService {
     private final UserRepository userRepository;
     private final MinioService minioService;
     private final DocumentSubmissionMapper documentSubmissionMapper;
+    private final StudentRepository studentRepository;
+    private final MoAIADocumentMapper moAIADocumentMapper;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
             MoAIADocumentRepository moAIADocumentRepository,
             UserRepository userRepository,
             MinioService minioService,
-            DocumentSubmissionMapper documentSubmissionMapper
+            DocumentSubmissionMapper documentSubmissionMapper,
+            StudentRepository studentRepository,
+            MoAIADocumentMapper moAIADocumentMapper
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
         this.userRepository = userRepository;
         this.minioService = minioService;
         this.documentSubmissionMapper = documentSubmissionMapper;
+        this.studentRepository = studentRepository;
+        this.moAIADocumentMapper = moAIADocumentMapper;
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -100,7 +110,10 @@ public class DocumentSubmissionService {
             UUID userId,
             String search
     ) {
-        return moAIADocumentRepository.findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+        Page<MoaIADocumentModel> page = moAIADocumentRepository
+                .findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+
+        return page.map(moAIADocumentMapper::toDto);
     }
 
     public Page<StudentSubmissionPaginationDTO> findSubmissionsByUserIdAndMoAIAType(
@@ -122,7 +135,7 @@ public class DocumentSubmissionService {
             SubmissionModel submission,
             String userEmail,
             MoaIADocumentRequest moaIADocumentRequest
-    ){
+    ) throws Exception {
         NumericRandomGenerator numericRandomGenerator = new NumericRandomGenerator();
 
         submission.setSubmissionCode(numericRandomGenerator.generate(20));
@@ -131,6 +144,13 @@ public class DocumentSubmissionService {
                         .orElseThrow(() -> new UserNotFoundException(
                                 "user with email" + userEmail + " not found"
                         ));
+
+        if (!isStudentValid(user.getId())) {
+            throw new StudentNotValidException(
+                    "student not have a valid nim and study program yet. Set it first"
+            );
+        }
+
         submission.setUser(user);
         submission.setSubmissionDate(Instant.now());
         submission.setCreatedAt(Instant.now());
@@ -148,11 +168,15 @@ public class DocumentSubmissionService {
         return submission;
     }
 
-    public void saveMoaIADocument(
+    private Boolean isStudentValid(UUID userId) {
+        return studentRepository.isStudentValid(userId);
+    }
+
+    private void saveMoaIADocument(
             SubmissionModel submission,
             MoaIADocumentRequest moaIADocumentRequest
-    ) {
-        MoaIADocumentModel moaIADocument = new MoaIADocumentModel();
+    ) throws Exception {
+        var moaIADocument = new MoaIADocumentModel();
 
         moaIADocument.setSubmission(submission);
         moaIADocument.setDocumentType(moaIADocumentRequest.getDocumentType());
@@ -162,24 +186,29 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativeName(moaIADocumentRequest.getPartnerRepresentativeName());
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
-        moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
+
+        var snapshotEntities = StudentSnapshotMapper.toEntities(
+                moaIADocumentRequest.getStudentSnapshots(),
+                moaIADocument
+        );
+        moaIADocument.setStudentSnapshots(snapshotEntities);
         moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
         moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
 
         moAIADocumentRepository.save(moaIADocument);
     }
 
-    public void saveCooperationRequestDocument() {
+    private void saveCooperationRequestDocument() {
     }
 
-    public void saveMouRequestDocument() {
+    private void saveMouRequestDocument() {
     }
 
-    public void saveVisitRequestDocument() {
+    private void saveVisitRequestDocument() {
     }
 
 //    teknik_informatika > Teknik Informatika
-    public static String formatString(String input) {
+    private static String formatString(String input) {
         if (input == null || input.isBlank()) return input;
 
         String[] words = input.replace("_", " ").toLowerCase().split(" ");
@@ -197,10 +226,10 @@ public class DocumentSubmissionService {
     }
 
 //    for student snapshots: [dono, joko] > 1. Dono 2. Joko
-    public static String toNumberedHtmlList(List<String> items) {
+    private static String toNumberedHtmlList(List<StudentInfo> items) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < items.size(); i++) {
-            result.append(i + 1).append(". ").append(items.get(i));
+            result.append(i + 1).append(". ").append(items.get(i).getFullName());
             if (i < items.size() - 1) result.append("<br/>");
         }
         return result.toString();
@@ -262,14 +291,24 @@ public class DocumentSubmissionService {
         data.setYearInLongText(yearInLongText);
         data.setDdMMyyyyFormatDate(ddMMyyyFormatDate);
 
-        List<StudentSnapshot> studentSnapshots = moaIAData.getStudentSnapshots();
         List<StudentSnapshotDisplayDTO> displayStudentSnapshotsDTO = new ArrayList<>();
-        for (StudentSnapshot snapshot:  studentSnapshots) {
+        for (StudentSnapshotModel snapshot : moaIAData.getStudentSnapshots()) {
+
+            List<StudentInfo> studentInfos = new ArrayList<>();
+            if (snapshot.getStudents() != null) {
+                for (StudentSnapshotStudentModel s : snapshot.getStudents()) {
+                    studentInfos.add(new StudentInfo(
+                            s.getFullName(),
+                            s.getEmail(),
+                            s.getNim()
+                    ));
+                }
+            }
 
             StudentSnapshotDisplayDTO snapShotDTO = new StudentSnapshotDisplayDTO(
                     formatString(snapshot.getStudyProgram()),
                     snapshot.getUnit(),
-                    toNumberedHtmlList(snapshot.getStudents()),
+                    toNumberedHtmlList(studentInfos),
                     snapshot.getTotal()
             );
             displayStudentSnapshotsDTO.add(snapShotDTO);
@@ -339,7 +378,14 @@ public class DocumentSubmissionService {
         moaIa.setPartnerRepresentativeName(request.getPartnerRepresentativeName());
         moaIa.setPartnerRepresentativePosition(request.getPartnerRepresentativePosition());
         moaIa.setActivityType(request.getActivityType());
-        moaIa.setStudentSnapshots(request.getStudentSnapshots());
+
+        moaIa.clearStudentSnapshots();
+        var snapshotEntities = StudentSnapshotMapper.toEntities(
+                request.getStudentSnapshots(),
+                moaIa
+        );
+        moaIa.getStudentSnapshots().addAll(snapshotEntities);
+
         moaIa.setPartnerAddress(request.getPartnerAddress());
         moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
     }

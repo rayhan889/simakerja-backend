@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.controller;
 
+import com.rynrama.simakerjabackend.dto.StudentInfo;
 import com.rynrama.simakerjabackend.dto.StudentUpdateRequest;
 import com.rynrama.simakerjabackend.model.StudentModel;
 import com.rynrama.simakerjabackend.service.StudentService;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,5 +36,21 @@ public class StudentController {
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
                 .body(GlobalAPIResponse.success(student));
+    }
+
+    @GetMapping("/registered")
+    public ResponseEntity<GlobalAPIResponse<List<StudentInfo>>> getAllRegisteredStudents(
+            @RequestParam(value = "exclude_nim", required = false) String excludeNim,
+            @RequestParam(value = "study_program", required = false) String studyProgram
+    ) {
+
+        var students = studentService.findAllRegisteredStudents(
+                excludeNim,
+                studyProgram
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(students));
     }
 }

@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.service;
 
+import com.rynrama.simakerjabackend.dto.StudentInfo;
 import com.rynrama.simakerjabackend.dto.StudentUpdateRequest;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.model.StudentModel;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,5 +44,9 @@ public class StudentService {
 
     public Optional<StudentModel> findStudentByUserId(UUID userId) {
         return studentRepo.findByUserId(userId);
+    }
+
+    public List<StudentInfo> findAllRegisteredStudents(String excludeNim, String studyProgram) {
+        return studentRepo.findAllRegisteredStudents(excludeNim, studyProgram);
     }
 }

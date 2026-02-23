@@ -1,9 +1,11 @@
 package com.rynrama.simakerjabackend.repository;
 
+import com.rynrama.simakerjabackend.dto.StudentInfo;
 import com.rynrama.simakerjabackend.model.StudentModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,4 +17,38 @@ public interface StudentRepository extends JpaRepository<StudentModel, UUID> {
             where s.user.id = :id
 """)
     Optional<StudentModel> findByUserId(UUID id);
+
+    @Query("""
+        select
+            new com.rynrama.simakerjabackend.dto.StudentInfo(
+                u.fullName,
+                    u.email,
+                        s.nim
+             ) from StudentModel s
+            join UserModel u on s.user.id = u.id
+                where u.status = 'active'
+                    and s.nim is not null
+                        and s.studyProgram is not null
+                            and (
+                                    :excludeNim is null or :excludeNim = ''
+                                        or s.nim <> :excludeNim
+                                )
+                                    and (
+                                        :studyProgram is null or :studyProgram = ''
+                                            or s.studyProgram = :studyProgram
+                                        )
+    """)
+    List<StudentInfo> findAllRegisteredStudents(String excludeNim, String studyProgram);
+
+    @Query("""
+        select (
+            u.status = 'active'
+                and s.studyProgram is not null
+                    and s.nim is not null
+            )
+                from StudentModel s
+                    join UserModel u on s.user.id = u.id
+                        where u.id = :userId
+    """)
+    Boolean isStudentValid(UUID userId);
 }

@@ -22,6 +22,19 @@ public class MoAIADocumentMapper {
     }
 
     public MoAIADocumentDTO toDto(MoaIADocumentModel model) {
-        return modelMapper.map(model, MoAIADocumentDTO.class);
+        var studentSnapshots = StudentSnapshotMapper.toDtos(model.getStudentSnapshots());
+
+        return new MoAIADocumentDTO(
+                model.getPartnerName(),
+                model.getPartnerNumber(),
+                model.getFacultyRepresentativeName(),
+                model.getPartnerRepresentativeName(),
+                model.getPartnerRepresentativePosition(),
+                model.getActivityType(),
+                model.getDocumentType(),
+                studentSnapshots,
+                model.getPartnerAddress(),
+                model.getPartnerLogoKey()
+        );
     }
 }

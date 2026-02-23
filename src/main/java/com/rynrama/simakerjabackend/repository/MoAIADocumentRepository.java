@@ -19,49 +19,29 @@ import java.util.UUID;
 public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentModel, UUID> {
 
     @Query("""
-        select new com.rynrama.simakerjabackend.dto.MoAIADocumentDTO(
-            m.partnerName,
-            m.partnerNumber,
-            m.facultyRepresentativeName,
-            m.partnerRepresentativeName,
-            m.partnerRepresentativePosition,
-            m.activityType,
-            m.documentType,
-            m.studentSnapshots,
-            m.partnerAddress,
-            m.partnerLogoKey
-        )
+        select distinct m
         from MoaIADocumentModel m
+            left join fetch m.studentSnapshots s
+            left join fetch s.students st
             where m.submission.id = :submissionId
-    """)
-    Optional<MoAIADocumentDTO> findAllMoAIABySubmissionId(@Param("submissionId") String submissionId);
+        """)
+    Optional<MoaIADocumentModel> findAllMoAIABySubmissionId(@Param("submissionId") String submissionId);
 
     @Query("""
-        select new com.rynrama.simakerjabackend.dto.MoAIADocumentDTO(
-            m.partnerName,
-            m.partnerNumber,
-            m.facultyRepresentativeName,
-            m.partnerRepresentativeName,
-            m.partnerRepresentativePosition,
-            m.activityType,
-            m.documentType,
-            m.studentSnapshots,
-            m.partnerAddress,
-            m.partnerLogoKey
-        )
+        select distinct m
         from MoaIADocumentModel m
             left join m.submission s
-                left join s.user u
-                    where (:userId is null or u.id = :userId)
-                    and (
-                        :search is null or :search = ''
-                        or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
-                        or lower(m.partnerNumber) like lower(concat('%', CAST(:search AS string), '%'))
-                        or lower(m.facultyRepresentativeName) like lower(concat('%', CAST(:search AS string), '%'))
-                        or lower(m.partnerRepresentativeName) like lower(concat('%', CAST(:search AS string), '%'))
-                    )
-""")
-    Page<MoAIADocumentDTO> findAllMoAIADocumentsByUserEmail(
+            left join s.user u
+        where (:userId is null or u.id = :userId)
+          and (
+              :search is null or :search = ''
+              or lower(m.partnerName) like lower(concat('%', cast(:search as string), '%'))
+              or lower(m.partnerNumber) like lower(concat('%', cast(:search as string), '%'))
+              or lower(m.facultyRepresentativeName) like lower(concat('%', cast(:search as string), '%'))
+              or lower(m.partnerRepresentativeName) like lower(concat('%', cast(:search as string), '%'))
+          )
+        """)
+    Page<MoaIADocumentModel> findAllMoAIADocumentsByUserEmail(
             Pageable pageable,
             @Param("userId") UUID userId,
             @Param("search") String search
