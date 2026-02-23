@@ -60,7 +60,7 @@ public class DocumentSubmissionController {
     ) {
         UUID userId = principal.getUser().getId();
 
-        Page<MoAIADocumentDTO> moaIa = documentService.findPaginatedMoAIA(
+        var moaIa = documentService.findPaginatedMoAIA(
                 pageable,
                 userId,
                 search

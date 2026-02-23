@@ -6,6 +6,8 @@ import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.exception.StudentNotValidException;
 import com.rynrama.simakerjabackend.exception.UserNotFoundException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
+import com.rynrama.simakerjabackend.mapper.MoAIADocumentMapper;
+import com.rynrama.simakerjabackend.mapper.StudentSnapshotMapper;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.StudentRepository;
@@ -34,6 +36,7 @@ public class DocumentSubmissionService {
     private final MinioService minioService;
     private final DocumentSubmissionMapper documentSubmissionMapper;
     private final StudentRepository studentRepository;
+    private final MoAIADocumentMapper moAIADocumentMapper;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
@@ -41,7 +44,8 @@ public class DocumentSubmissionService {
             UserRepository userRepository,
             MinioService minioService,
             DocumentSubmissionMapper documentSubmissionMapper,
-            StudentRepository studentRepository
+            StudentRepository studentRepository,
+            MoAIADocumentMapper moAIADocumentMapper
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
@@ -49,6 +53,7 @@ public class DocumentSubmissionService {
         this.minioService = minioService;
         this.documentSubmissionMapper = documentSubmissionMapper;
         this.studentRepository = studentRepository;
+        this.moAIADocumentMapper = moAIADocumentMapper;
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -105,7 +110,10 @@ public class DocumentSubmissionService {
             UUID userId,
             String search
     ) {
-        return moAIADocumentRepository.findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+        Page<MoaIADocumentModel> page = moAIADocumentRepository
+                .findAllMoAIADocumentsByUserEmail(pageable, userId, search);
+
+        return page.map(moAIADocumentMapper::toDto);
     }
 
     public Page<StudentSubmissionPaginationDTO> findSubmissionsByUserIdAndMoAIAType(
@@ -179,7 +187,11 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
 
-        moaIADocument.setStudentSnapshots(moaIADocumentRequest.getStudentSnapshots());
+        var snapshotEntities = StudentSnapshotMapper.toEntities(
+                moaIADocumentRequest.getStudentSnapshots(),
+                moaIADocument
+        );
+        moaIADocument.setStudentSnapshots(snapshotEntities);
         moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
         moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
 
@@ -279,14 +291,24 @@ public class DocumentSubmissionService {
         data.setYearInLongText(yearInLongText);
         data.setDdMMyyyyFormatDate(ddMMyyyFormatDate);
 
-        List<StudentSnapshot> studentSnapshots = moaIAData.getStudentSnapshots();
         List<StudentSnapshotDisplayDTO> displayStudentSnapshotsDTO = new ArrayList<>();
-        for (StudentSnapshot snapshot:  studentSnapshots) {
+        for (StudentSnapshotModel snapshot : moaIAData.getStudentSnapshots()) {
+
+            List<StudentInfo> studentInfos = new ArrayList<>();
+            if (snapshot.getStudents() != null) {
+                for (StudentSnapshotStudentModel s : snapshot.getStudents()) {
+                    studentInfos.add(new StudentInfo(
+                            s.getFullName(),
+                            s.getEmail(),
+                            s.getNim()
+                    ));
+                }
+            }
 
             StudentSnapshotDisplayDTO snapShotDTO = new StudentSnapshotDisplayDTO(
                     formatString(snapshot.getStudyProgram()),
                     snapshot.getUnit(),
-                    toNumberedHtmlList(snapshot.getStudents()),
+                    toNumberedHtmlList(studentInfos),
                     snapshot.getTotal()
             );
             displayStudentSnapshotsDTO.add(snapShotDTO);
@@ -356,7 +378,14 @@ public class DocumentSubmissionService {
         moaIa.setPartnerRepresentativeName(request.getPartnerRepresentativeName());
         moaIa.setPartnerRepresentativePosition(request.getPartnerRepresentativePosition());
         moaIa.setActivityType(request.getActivityType());
-        moaIa.setStudentSnapshots(request.getStudentSnapshots());
+
+        moaIa.clearStudentSnapshots();
+        var snapshotEntities = StudentSnapshotMapper.toEntities(
+                request.getStudentSnapshots(),
+                moaIa
+        );
+        moaIa.getStudentSnapshots().addAll(snapshotEntities);
+
         moaIa.setPartnerAddress(request.getPartnerAddress());
         moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
     }

@@ -28,7 +28,7 @@ public class DocumentSubmissionMapper {
     }
 
     public DocumentSubmissionDTO toDetailDTO(SubmissionModel submission, MoaIADocumentModel moaIaDocument) {
-    DocumentSubmissionDTO dto = new DocumentSubmissionDTO();
+        DocumentSubmissionDTO dto = new DocumentSubmissionDTO();
 
         dto.setId(submission.getId());
         dto.setUser(submission.getUser());
@@ -44,6 +44,10 @@ public class DocumentSubmissionMapper {
         dto.setUpdatedAt(submission.getUpdatedAt());
 
         if (moaIaDocument != null) {
+            var studentSnapshotsDto = StudentSnapshotMapper.toDtos(
+                    moaIaDocument.getStudentSnapshots()
+            );
+
             MoAIADocumentDTO moaIaDTO = new MoAIADocumentDTO(
                     moaIaDocument.getPartnerName(),
                     moaIaDocument.getPartnerNumber(),
@@ -52,7 +56,7 @@ public class DocumentSubmissionMapper {
                     moaIaDocument.getPartnerRepresentativePosition(),
                     moaIaDocument.getActivityType(),
                     moaIaDocument.getDocumentType(),
-                    moaIaDocument.getStudentSnapshots(),
+                    studentSnapshotsDto,
                     moaIaDocument.getPartnerAddress(),
                     moaIaDocument.getPartnerLogoKey()
             );

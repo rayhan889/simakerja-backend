@@ -1,0 +1,3 @@
+ALTER TABLE moa_ia_documents
+DROP
+COLUMN student_snapshots;

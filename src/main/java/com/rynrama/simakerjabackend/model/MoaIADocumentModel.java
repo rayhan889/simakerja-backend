@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,9 +50,12 @@ public class MoaIADocumentModel {
     @Column(name = "document_activity", nullable = false)
     private DocumentActivityType activityType;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "student_snapshots", columnDefinition = "jsonb", nullable = false)
-    private List<StudentSnapshot> studentSnapshots;
+    @OneToMany(
+            mappedBy = "document",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<StudentSnapshotModel> studentSnapshots = new ArrayList<>();
 
     @Column(name = "partner_logo_key", nullable = false)
     private String partnerLogoKey;
@@ -71,7 +75,7 @@ public class MoaIADocumentModel {
             String partnerRepresentativeName,
             String partnerRepresentativePosition,
             DocumentActivityType activityType,
-            List<StudentSnapshot> studentSnapshots,
+            List<StudentSnapshotModel> studentSnapshots,
             String partnerLogoKey,
             String partnerAddress
     ) {
@@ -160,14 +164,6 @@ public class MoaIADocumentModel {
         this.submission = submission;
     }
 
-    public List<StudentSnapshot> getStudentSnapshots() {
-        return studentSnapshots;
-    }
-
-    public void setStudentSnapshots(List<StudentSnapshot> studentSnapshots) {
-        this.studentSnapshots = studentSnapshots;
-    }
-
     public String getPartnerLogoKey() {
         return partnerLogoKey;
     }
@@ -182,5 +178,25 @@ public class MoaIADocumentModel {
 
     public void setPartnerAddress(String partnerAddress) {
         this.partnerAddress = partnerAddress;
+    }
+
+    public List<StudentSnapshotModel> getStudentSnapshots() {
+        return studentSnapshots;
+    }
+
+    public void setStudentSnapshots(List<StudentSnapshotModel> studentSnapshots) {
+        this.studentSnapshots = studentSnapshots;
+    }
+
+    public void clearStudentSnapshots() {
+        for (StudentSnapshotModel s : studentSnapshots) {
+            s.setDocument(null);
+        }
+        studentSnapshots.clear();
+    }
+
+    public void addStudentSnapshot(StudentSnapshotModel snapshot) {
+        studentSnapshots.add(snapshot);
+        snapshot.setDocument(this);
     }
 }
