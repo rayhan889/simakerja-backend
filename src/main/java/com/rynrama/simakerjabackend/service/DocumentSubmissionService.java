@@ -1,10 +1,7 @@
 package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.dto.*;
-import com.rynrama.simakerjabackend.exception.DuplicateResourceException;
-import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
-import com.rynrama.simakerjabackend.exception.StudentNotValidException;
-import com.rynrama.simakerjabackend.exception.UserNotFoundException;
+import com.rynrama.simakerjabackend.exception.*;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.mapper.MoAIADocumentMapper;
 import com.rynrama.simakerjabackend.mapper.StudentSnapshotMapper;
@@ -120,13 +117,15 @@ public class DocumentSubmissionService {
         Pageable pageable,
         UUID userId,
         String status,
-        String search
+        String search,
+        String nim
     ) {
         return submissionRepository.findSubmissionsByUserIdAndMoAIAType(
                 pageable,
                 userId,
                 status,
-                search
+                search,
+                nim
         );
     }
 
@@ -328,7 +327,8 @@ public class DocumentSubmissionService {
     @Transactional
     public SubmissionModel updateDocument(
             DocumentUpdateRequest request,
-            String submissionId
+            String submissionId,
+            UUID userId
     ) throws Exception {
         SubmissionModel submission = submissionRepository
                 .findById(submissionId)
@@ -337,6 +337,12 @@ public class DocumentSubmissionService {
                                 "Submission with id: " + submissionId + " not found"
                         )
                 );
+
+        if (canEditMoaIa(userId, submission.getUser().getId())) {
+            throw new InsufficientResourceException(
+                    "edit moIa only can be done by student who submitted it"
+            );
+        }
 
         submission.setNotes(request.getNotes());
 
@@ -358,6 +364,13 @@ public class DocumentSubmissionService {
         }
 
         return submission;
+    }
+
+    private Boolean canEditMoaIa(UUID userId, UUID applicantId) {
+        if (userId == null) return false;
+        if (applicantId == null) return false;
+
+        return userId.equals(applicantId);
     }
 
     public void updateMoaIa(

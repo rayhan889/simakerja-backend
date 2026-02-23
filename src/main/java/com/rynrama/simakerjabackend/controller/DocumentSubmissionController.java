@@ -77,13 +77,15 @@ public class DocumentSubmissionController {
             Pageable pageable,
             @RequestParam(value = "search", required = false)  String search,
             @RequestParam(value = "status", required = false)  String status,
+            @RequestParam(value = "nim", required = false) String nim,
             @PathVariable("user_id") UUID userId
     ) {
         Page<StudentSubmissionPaginationDTO> moaIa = documentService.findSubmissionsByUserIdAndMoAIAType(
                 pageable,
                 userId,
                 status,
-                search
+                search,
+                nim
         );
 
         return ResponseEntity
@@ -140,10 +142,12 @@ public class DocumentSubmissionController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateDocument(
         @Valid @RequestBody DocumentUpdateRequest request,
-        @PathVariable("submission_id") String submissionId
+        @PathVariable("submission_id") String submissionId,
+        @AuthenticationPrincipal CustomUserPrincipal principal
     ) throws Exception {
+        var userId = principal.getUser().getId();
 
-        SubmissionModel submission = documentService.updateDocument(request, submissionId);
+        SubmissionModel submission = documentService.updateDocument(request, submissionId, userId);
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)

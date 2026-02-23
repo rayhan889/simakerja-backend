@@ -112,4 +112,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(GlobalAPIResponse.error(ex.getMessage()));
     }
+
+    @ExceptionHandler(InsufficientResourceException.class)
+    public ResponseEntity<GlobalAPIResponse<Object>> handleInsufficientResource(ResourceNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(GlobalAPIResponse.error(ex.getMessage()));
+    }
 }
