@@ -30,13 +30,16 @@ public class StaffModel {
     )
     private UserModel user;
 
-    @Column(name = "full_name")
-    private String fullName;
-
     @Column(unique = true, length = 20)
     private String nip;
 
     public StaffModel() {
+    }
+
+    public StaffModel(UUID id, UserModel user, String nip) {
+        this.id = id;
+        this.user = user;
+        this.nip = nip;
     }
 
     public UUID getId() {
@@ -53,14 +56,6 @@ public class StaffModel {
 
     public void setUser(UserModel user) {
         this.user = user;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
     }
 
     public String getNip() {
