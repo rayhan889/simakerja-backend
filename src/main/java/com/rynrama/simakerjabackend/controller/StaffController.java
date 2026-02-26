@@ -1,0 +1,36 @@
+package com.rynrama.simakerjabackend.controller;
+
+import com.rynrama.simakerjabackend.dto.StaffVerifySubmissionRequest;
+import com.rynrama.simakerjabackend.model.SubmissionModel;
+import com.rynrama.simakerjabackend.service.StaffService;
+import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/staffs")
+public class StaffController {
+
+    private final StaffService staffService;
+
+    public StaffController(StaffService staffService) {
+        this.staffService = staffService;
+    }
+
+    @PutMapping("/verify-moa-ia/{submission_id}")
+    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateSubmissionStatusToVerifiedByStaff(
+            @Valid @RequestBody StaffVerifySubmissionRequest request,
+            @PathVariable("submission_id") String submissionId
+    ) throws Exception {
+
+        var submission = staffService.verifySubmissionByStaff(request, submissionId);
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(GlobalAPIResponse.success(submission));
+    }
+}

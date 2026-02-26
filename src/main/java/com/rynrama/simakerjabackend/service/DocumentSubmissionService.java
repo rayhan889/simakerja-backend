@@ -15,7 +15,10 @@ import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
 import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,24 @@ public class DocumentSubmissionService {
         this.documentSubmissionMapper = documentSubmissionMapper;
         this.studentRepository = studentRepository;
         this.moAIADocumentMapper = moAIADocumentMapper;
+    }
+
+    public DocumentActivityType toValidDocumentActivityType(String value) {
+        if (value == null || value.isBlank()) return null;
+
+        return Arrays.stream(DocumentActivityType.values())
+                .filter(e -> e.name().equalsIgnoreCase(value))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public SubmissionStatus  toValidSubmissionStatus(String value) {
+        if (value == null || value.isBlank()) return null;
+
+        return Arrays.stream(SubmissionStatus.values())
+                .filter(e -> e.name().equalsIgnoreCase(value))
+                .findFirst()
+                .orElse(null);
     }
 
     public Page<DocumentSubmissionDTO> findPaginatedSubmissions(
@@ -151,7 +172,13 @@ public class DocumentSubmissionService {
         }
 
         submission.setUser(user);
-        submission.setSubmissionDate(Instant.now());
+
+        var submissionDate = Instant.now();
+        submission.setSubmissionDate(submissionDate);
+
+        var period = YearMonth.from(submissionDate.atZone(ZoneId.of("UTC")));
+        submission.setPeriod(period.atDay(1));
+
         submission.setCreatedAt(Instant.now());
         submission.setFacultyAddress(submission.getFacultyAddress());
 
@@ -234,6 +261,33 @@ public class DocumentSubmissionService {
         return result.toString();
     }
 
+    public static String cleanFullname(String input) {
+        if (input == null || input.isBlank()) {
+            return input;
+        }
+
+        String result = input.replaceFirst("^\\d+_", "");
+
+        result = result.replaceFirst("\\s+(TI|SI|PTI)\\b.*", "");
+
+        result = result.replaceAll("[^A-Za-z\\s]", "");
+
+        result = result.trim().replaceAll("\\s+", " ");
+
+        String[] parts = result.toLowerCase().split(" ");
+        StringBuilder builder = new StringBuilder();
+
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                builder.append(Character.toUpperCase(part.charAt(0)))
+                        .append(part.substring(1))
+                        .append(" ");
+            }
+        }
+
+        return builder.toString().trim();
+    }
+
     public MoAIAPDFViewModel buildMoAIAData(String submissionId) throws Exception {
         MoAIAPDFViewModel data = new MoAIAPDFViewModel();
 
@@ -297,7 +351,7 @@ public class DocumentSubmissionService {
             if (snapshot.getStudents() != null) {
                 for (StudentSnapshotStudentModel s : snapshot.getStudents()) {
                     studentInfos.add(new StudentInfo(
-                            s.getFullName(),
+                            cleanFullname(s.getFullName()),
                             s.getEmail(),
                             s.getNim()
                     ));
@@ -401,6 +455,127 @@ public class DocumentSubmissionService {
 
         moaIa.setPartnerAddress(request.getPartnerAddress());
         moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
+    }
+
+//    MoA IA Document Pagination for Staff
+    public Page<StaffSubmissionPaginationDTO> findStaffSubmissionsPagination(
+            Pageable pageable,
+            String search
+    ) {
+        Pageable sort = staffSubmissionPaginationSort(pageable);
+        return submissionRepository.findStaffSubmissionsPagination(sort, search);
+    }
+
+//    MoA IA Document Pagination detail for Staff
+    public Page<StaffSubmissionPaginationDetailDTO> findStaffSubmissionsPaginationDetail(
+            Pageable pageable,
+            String search,
+            String partnerName,
+            String period,
+            String activityType
+    ) throws InvalidEnumException {
+        var validActivityType = toValidDocumentActivityType(activityType);
+        if (validActivityType == null) {
+            throw new InvalidEnumException(
+                    activityType + " is not a valid activity type"
+            );
+        }
+        Pageable sort = staffSubmissionPaginationDetailSort(pageable);
+        return submissionRepository.findStaffSubmissionsPaginationDetail(
+                sort,
+                search,
+                partnerName,
+                period,
+                validActivityType
+        );
+    }
+
+    public Optional<StaffSubmissionPaginationDetailHeaderDTO> findStaffSubmissionsPaginationHeaderDetail(
+            String partnerName,
+            String period,
+            String activityType
+    ) throws InvalidEnumException {
+        var validActivityType = toValidDocumentActivityType(activityType);
+        if (validActivityType == null) {
+            throw new InvalidEnumException(
+                    activityType + " is not a valid activity type"
+            );
+        }
+        return submissionRepository.findStaffSubmissionsPaginationHeaderDetail(
+                partnerName,
+                period,
+                validActivityType
+        );
+    }
+
+    private Pageable staffSubmissionPaginationSort(Pageable pageable) {
+        Sort requested = pageable.getSort();
+
+        if (requested == null || requested.isUnsorted()) {
+            Sort defaultSort = Sort.by(Sort.Order.desc("period"));
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), defaultSort);
+        }
+
+        Sort mapped = Sort.unsorted();
+
+        for (Sort.Order order : requested) {
+            String key = order.getProperty();
+            if (key == null) continue;
+
+            String normalized = key.trim();
+
+            if (normalized.equals("period")) {
+                mapped = mapped.and(Sort.by(new Sort.Order(order.getDirection(), "period")));
+                continue;
+            }
+
+            if (normalized.equals("partnerName") || normalized.equals("partner_name")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "m.partnerName"));
+                continue;
+            }
+
+            if (normalized.equals("partnerNumber") || normalized.equals("partner_number")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "m.partnerNumber"));
+                continue;
+            }
+
+        }
+
+        if (mapped.isUnsorted()) {
+            mapped = Sort.by(Sort.Order.desc("period"));
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), mapped);
+    }
+
+    private Pageable staffSubmissionPaginationDetailSort(Pageable pageable) {
+        Sort requested = pageable.getSort();
+
+        if (requested == null || requested.isUnsorted()) {
+            Sort defaultSort = Sort.by(Sort.Order.desc("u.fullName"));
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), defaultSort);
+        }
+
+        Sort mapped = Sort.unsorted();
+
+        for (Sort.Order order : requested) {
+            String key = order.getProperty();
+            if (key == null) continue;
+
+            String normalized = key.trim();
+
+            if (normalized.equals("nim")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "s2.nim"));
+                continue;
+            }
+
+        }
+
+        if (mapped.isUnsorted()) {
+            mapped = Sort.by(Sort.Order.desc("u.fullName"));
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), mapped);
     }
 
 }

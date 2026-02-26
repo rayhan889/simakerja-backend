@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(
@@ -11,6 +12,7 @@ import java.time.Instant;
         indexes = {
             @Index(name = "idx_submission_code", columnList = "submission_code"),
             @Index(name = "idx_user_id", columnList = "user_id"),
+            @Index(name = "idx_staff_id", columnList = "staff_id"),
             @Index(name = "idx_status", columnList = "status"),
             @Index(name = "idx_submission_type", columnList = "submission_type")
         },
@@ -57,8 +59,16 @@ public class SubmissionModel {
 //    TO BE IMPLEMENTED LATER
 //    private Instant adhocVerifiedAt;
 //    private AdhocModel adhoc;
-//    private Instant staffVerifiedAt;
-//    private StaffModel staff;
+
+    @Column(name = "staff_verified_at")
+    private Instant staffVerifiedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id")
+    private StaffModel staff;
+
+    @Column(name = "period", nullable = false)
+    private LocalDate period;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -66,10 +76,33 @@ public class SubmissionModel {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+//    @OneToOne(
+//            mappedBy = "submission",
+//            cascade = CascadeType.ALL,
+//            orphanRemoval = true
+//    )
+//    private MoaIADocumentModel moaIa;
+
     public SubmissionModel() {
     }
 
-    public SubmissionModel(String id, String submissionCode, UserModel user, SubmissionType submissionType, SubmissionStatus status, String notes, String facultyLetterNumber, String faculty, Instant submissionDate, String facultyAddress ,Instant createdAt, Instant updatedAt) {
+    public SubmissionModel(
+            String id,
+            String submissionCode,
+            UserModel user,
+            SubmissionType submissionType,
+            SubmissionStatus status,
+            String notes,
+            String facultyLetterNumber,
+            String faculty,
+            Instant submissionDate,
+            String facultyAddress ,
+            Instant staffVerifiedAt,
+            StaffModel staff,
+            LocalDate period,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
         this.id = id;
         this.submissionCode = submissionCode;
         this.user = user;
@@ -80,6 +113,9 @@ public class SubmissionModel {
         this.faculty = faculty;
         this.submissionDate = submissionDate;
         this.facultyAddress = facultyAddress;
+        this.staffVerifiedAt = staffVerifiedAt;
+        this.staff = staff;
+        this.period = period;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -179,4 +215,36 @@ public class SubmissionModel {
     public void setFacultyAddress(String facultyAddress) {
         this.facultyAddress = facultyAddress;
     }
+
+    public Instant getStaffVerifiedAt() {
+        return staffVerifiedAt;
+    }
+
+    public void setStaffVerifiedAt(Instant staffVerifiedAt) {
+        this.staffVerifiedAt = staffVerifiedAt;
+    }
+
+    public StaffModel getStaff() {
+        return staff;
+    }
+
+    public void setStaff(StaffModel staff) {
+        this.staff = staff;
+    }
+
+    public LocalDate getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(LocalDate period) {
+        this.period = period;
+    }
+
+//    public MoaIADocumentModel getMoaIa() {
+//        return moaIa;
+//    }
+//
+//    public void setMoaIa(MoaIADocumentModel moaIa) {
+//        this.moaIa = moaIa;
+//    }
 }

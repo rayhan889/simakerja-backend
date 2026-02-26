@@ -1,10 +1,9 @@
 package com.rynrama.simakerjabackend.repository;
 
-import com.rynrama.simakerjabackend.dto.DocumentSubmissionDTO;
-import com.rynrama.simakerjabackend.dto.StudentSubmissionPaginationDTO;
+import com.rynrama.simakerjabackend.dto.*;
+import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
-import io.lettuce.core.dynamic.annotation.Param;
-import org.jspecify.annotations.NonNull;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -84,4 +83,65 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
                 where s.id = :submissionId
     """)
     Optional<SubmissionModel> findByIdWithUser(@Param("submissionId") String submissionId);
+
+    @Query("""
+    select new com.rynrama.simakerjabackend.dto.StaffSubmissionPaginationDTO(
+        s.period,
+        m.partnerName,
+        m.partnerNumber,
+        m.activityType,
+        count(s.id)
+    ) from SubmissionModel s
+        join MoaIADocumentModel m on s.id = m.submission.id
+            where ( :search is null or :search = ''
+                        or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
+                        or lower(m.partnerNumber) like lower(concat('%', CAST(:search AS string), '%'))
+                    )
+            group by s.period, m.partnerName, m.partnerNumber, m.activityType
+    """)
+    Page<StaffSubmissionPaginationDTO> findStaffSubmissionsPagination(
+            Pageable pageable,
+            @Param("search") String search
+    );
+
+    @Query("""
+    select new com.rynrama.simakerjabackend.dto.StaffSubmissionPaginationDetailDTO(
+        s.id,
+            s.submissionCode,
+                s2.studyProgram,
+                    u.fullName,
+                        s2.nim,
+                            s.status
+        ) from SubmissionModel s
+            join MoaIADocumentModel m on s.id = m.submission.id
+                join UserModel u on s.user.id = u.id
+                    left join StudentModel s2 on u.id = s2.user.id
+                        where m.partnerName = :partnerName and function('to_char', s.period, 'YYYY-MM') = :period and m.activityType = :activityType
+                            and ( :search is null or :search = ''
+                                or lower(u.fullName) like lower(concat('%', CAST(:search AS string), '%'))
+                                or lower(s2.nim) like lower(concat('%', CAST(:search AS string), '%'))
+                            )
+    """)
+    Page<StaffSubmissionPaginationDetailDTO> findStaffSubmissionsPaginationDetail(
+            Pageable pageable,
+            String search,
+            String partnerName,
+            String period,
+            DocumentActivityType activityType
+    );
+
+    @Query("""
+    select new com.rynrama.simakerjabackend.dto.StaffSubmissionPaginationDetailHeaderDTO(
+        m.partnerName,
+            s.period,
+                m.activityType
+        ) from SubmissionModel s
+            join MoaIADocumentModel m
+                where m.partnerName = :partnerName and function('to_char', s.period, 'YYYY-MM') = :period and m.activityType = :activityType
+    """)
+    Optional<StaffSubmissionPaginationDetailHeaderDTO> findStaffSubmissionsPaginationHeaderDetail(
+            String partnerName,
+            String period,
+            DocumentActivityType activityType
+    );
 }

@@ -2,6 +2,7 @@ package com.rynrama.simakerjabackend.controller;
 
 import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.dto.*;
+import com.rynrama.simakerjabackend.exception.InvalidEnumException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import com.rynrama.simakerjabackend.service.DocumentSubmissionService;
@@ -152,5 +153,65 @@ public class DocumentSubmissionController {
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
                 .body(GlobalAPIResponse.success(submission));
+    }
+
+//    Staff
+    @GetMapping("/moa-ia/staff")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<GlobalAPIResponse<Page<StaffSubmissionPaginationDTO>>> getStaffSubmissionsPagination(
+            Pageable pageable,
+            @RequestParam(value = "search", required = false)  String search
+    ) {
+
+        var submissions = documentService.findStaffSubmissionsPagination(
+                pageable,
+                search
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(submissions));
+    }
+
+    @GetMapping("/moa-ia/detail/staff")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<GlobalAPIResponse<Page<StaffSubmissionPaginationDetailDTO>>> getStaffSubmissionsPaginationDetail(
+            Pageable pageable,
+            @RequestParam(value = "search", required = false)  String search,
+            @RequestParam(value = "partner_name") String partnerName,
+            @RequestParam(value = "period") String period,
+            @RequestParam(value = "activity_type") String activityType
+    ) throws InvalidEnumException {
+
+        var submissions = documentService.findStaffSubmissionsPaginationDetail(
+                pageable,
+                search,
+                partnerName,
+                period,
+                activityType
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(submissions));
+    }
+
+    @GetMapping("/moa-ia/header/detail/staff")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<GlobalAPIResponse<Optional<StaffSubmissionPaginationDetailHeaderDTO>>> getStaffSubmissionsPaginationHeaderDetail(
+            @RequestParam(value = "partner_name") String partnerName,
+            @RequestParam(value = "period") String period,
+            @RequestParam(value = "activity_type") String activityType
+    ) throws InvalidEnumException {
+
+        var header = documentService.findStaffSubmissionsPaginationHeaderDetail(
+                partnerName,
+                period,
+                activityType
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(header));
     }
 }
