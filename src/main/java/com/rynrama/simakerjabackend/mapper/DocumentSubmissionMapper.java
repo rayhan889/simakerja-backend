@@ -58,7 +58,8 @@ public class DocumentSubmissionMapper {
                     moaIaDocument.getDocumentType(),
                     studentSnapshotsDto,
                     moaIaDocument.getPartnerAddress(),
-                    moaIaDocument.getPartnerLogoKey()
+                    moaIaDocument.getPartnerLogoKey(),
+                    moaIaDocument.getPartnerCooperationPeriod()
             );
             dto.setMoaIa(moaIaDTO);
         }

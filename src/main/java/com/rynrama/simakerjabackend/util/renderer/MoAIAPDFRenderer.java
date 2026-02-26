@@ -36,6 +36,8 @@ public class MoAIAPDFRenderer implements PDFDocumentRenderer<MoAIAPDFViewModel> 
         context.setVariable("yearInLongText", model.getYearInLongText());
         context.setVariable("ddMMYYYYFormatDate", model.getDdMMyyyyFormatDate());
         context.setVariable("studentSnapshots", model.getStudentSnapshots());
+        context.setVariable("partnerCooperationperiod", model.getPartnerCooperationperiod());
+        context.setVariable("partnerCooperationPeriodIntext", model.getPartnerCooperationPeriodIntext());
         return context;
     }
 }

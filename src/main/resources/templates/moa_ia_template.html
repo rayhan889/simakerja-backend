@@ -348,7 +348,7 @@
             </tr>
         </table>
         <p class="paragprah-spacing-1x">
-            dalam hal ini bertindak untuk dan atas nama Fakultas <span th:text="${faculty}">Faculty</span>,
+            dalam hal ini bertindak untuk dan atas nama Fakultas <span th:text="${facultyName}">Faculty</span>,
             Universitas Negeri Surabaya (UNESA) selanjutnya disebut <strong>PIHAK KESATU</strong>.
         </p>
     </div>
@@ -461,7 +461,7 @@
     <p class="article-title">PASAL 6<br/>JANGKA WAKTU</p>
     <div class="article-content">
         <p class="paragprah-spacing-1x">
-            Perjanjian Kerja Sama ini berlaku selama 1 (satu) tahun, dimulai dari tahap observasi,
+            Perjanjian Kerja Sama ini berlaku selama <span th:text="${partnerCooperationperiod}">Period</span> (<span th:text="${partnerCooperationPeriodIntext}">Period Text</span>) tahun, dimulai dari tahap observasi,
             penyesuaian dengan bidang keilmuan, penempatan di <b th:text="${partnerName}">Partner Name</b>,
             hingga penyusunan laporan <span th:text="${activityType}">Activity Type</span>. Selanjutnya,
             perjanjian ini akan dievaluasi dan dapat diperbarui sesuai dengan ketentuan yang berlaku

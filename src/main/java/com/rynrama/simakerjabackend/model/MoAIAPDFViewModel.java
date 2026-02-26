@@ -15,6 +15,8 @@ public class MoAIAPDFViewModel implements PDFViewModel {
     private String partnerRepresentativeName;
     private String partnerRepresentativePosition;
     private String partnerAddress;
+    private Integer partnerCooperationperiod;
+    private String partnerCooperationPeriodIntext;
 
     private String activityType;
 
@@ -162,5 +164,21 @@ public class MoAIAPDFViewModel implements PDFViewModel {
 
     public void setUnesaLogoUrl(String unesaLogoUrl) {
         this.unesaLogoUrl = unesaLogoUrl;
+    }
+
+    public Integer getPartnerCooperationperiod() {
+        return partnerCooperationperiod;
+    }
+
+    public void setPartnerCooperationperiod(Integer partnerCooperationperiod) {
+        this.partnerCooperationperiod = partnerCooperationperiod;
+    }
+
+    public String getPartnerCooperationPeriodIntext() {
+        return partnerCooperationPeriodIntext;
+    }
+
+    public void setPartnerCooperationPeriodIntext(String partnerCooperationPeriodIntext) {
+        this.partnerCooperationPeriodIntext = partnerCooperationPeriodIntext;
     }
 }
