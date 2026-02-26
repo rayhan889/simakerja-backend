@@ -34,7 +34,8 @@ public class MoAIADocumentMapper {
                 model.getDocumentType(),
                 studentSnapshots,
                 model.getPartnerAddress(),
-                model.getPartnerLogoKey()
+                model.getPartnerLogoKey(),
+                model.getPartnerCooperationPeriod()
         );
     }
 }

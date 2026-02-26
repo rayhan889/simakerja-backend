@@ -4,10 +4,7 @@ import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.MoAIADocumentType;
 import com.rynrama.simakerjabackend.model.StudentSnapshot;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
@@ -56,6 +53,11 @@ public class MoaIADocumentRequest {
     )
     private String partnerLogoKey;
 
+    @NotNull
+    @Min(1)
+    @Max(7)
+    private Integer partnerCooperationPeriod;
+
     public MoaIADocumentRequest(
             MoAIADocumentType documentType,
             String partnerName,
@@ -66,7 +68,8 @@ public class MoaIADocumentRequest {
             DocumentActivityType activityType,
             List<StudentSnapshot> studentSnapshots,
             String partnerAddress,
-            String partnerLogoKey
+            String partnerLogoKey,
+            Integer partnerCooperationPeriod
     ) {
         this.documentType = documentType;
         this.partnerName = partnerName;
@@ -78,6 +81,7 @@ public class MoaIADocumentRequest {
         this.studentSnapshots = studentSnapshots;
         this.partnerAddress = partnerAddress;
         this.partnerLogoKey = partnerLogoKey;
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 
     public MoAIADocumentType getDocumentType() {
@@ -158,5 +162,13 @@ public class MoaIADocumentRequest {
 
     public void setPartnerLogoKey(String partnerLogoKey) {
         this.partnerLogoKey = partnerLogoKey;
+    }
+
+    public Integer getPartnerCooperationPeriod() {
+        return partnerCooperationPeriod;
+    }
+
+    public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 }

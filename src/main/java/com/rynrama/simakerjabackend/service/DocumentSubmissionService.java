@@ -11,6 +11,7 @@ import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
+import com.rynrama.simakerjabackend.util.NumberToIndonesian;
 import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
 import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.ClassPathResource;
@@ -212,6 +213,7 @@ public class DocumentSubmissionService {
         moaIADocument.setPartnerRepresentativeName(moaIADocumentRequest.getPartnerRepresentativeName());
         moaIADocument.setPartnerRepresentativePosition(moaIADocumentRequest.getPartnerRepresentativePosition());
         moaIADocument.setActivityType(moaIADocumentRequest.getActivityType());
+        moaIADocument.setPartnerCooperationPeriod(moaIADocumentRequest.getPartnerCooperationPeriod());
 
         var snapshotEntities = StudentSnapshotMapper.toEntities(
                 moaIADocumentRequest.getStudentSnapshots(),
@@ -313,6 +315,8 @@ public class DocumentSubmissionService {
         data.setPartnerRepresentativeName(moaIAData.getPartnerRepresentativeName());
         data.setPartnerRepresentativePosition(moaIAData.getPartnerRepresentativePosition());
         data.setPartnerAddress(moaIAData.getPartnerAddress());
+        data.setPartnerCooperationperiod(moaIAData.getPartnerCooperationPeriod());
+        data.setPartnerCooperationPeriodIntext(NumberToIndonesian.toWord(moaIAData.getPartnerCooperationPeriod()));
 
         String formattedActivityType = "";
         switch (moaIAData.getActivityType()) {

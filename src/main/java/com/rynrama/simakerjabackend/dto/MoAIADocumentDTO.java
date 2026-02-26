@@ -19,6 +19,7 @@ public class MoAIADocumentDTO implements DocumentDetails {
     private final List<StudentSnapshot> studentSnapshots;
     private final String partnerAddress;
     private final String partnerLogoKey;
+    private final Integer partnerCooperationPeriod;
 
     @JsonCreator
     public MoAIADocumentDTO(
@@ -31,7 +32,8 @@ public class MoAIADocumentDTO implements DocumentDetails {
             @JsonProperty("documentType") MoAIADocumentType documentType,
             @JsonProperty("studentSnapshots") List<StudentSnapshot> studentSnapshots,
             @JsonProperty("partnerAddress") String partnerAddress,
-            @JsonProperty("partnerLogoKey") String partnerLogoKey
+            @JsonProperty("partnerLogoKey") String partnerLogoKey,
+            @JsonProperty("partnerCooperationPeriod") Integer partnerCooperationPeriod
     ) {
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
@@ -43,6 +45,7 @@ public class MoAIADocumentDTO implements DocumentDetails {
         this.studentSnapshots = studentSnapshots;
         this.partnerAddress = partnerAddress;
         this.partnerLogoKey = partnerLogoKey;
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 
     public String getPartnerName() {
@@ -83,5 +86,9 @@ public class MoAIADocumentDTO implements DocumentDetails {
 
     public String getPartnerLogoKey() {
         return partnerLogoKey;
+    }
+
+    public Integer getPartnerCooperationPeriod() {
+        return partnerCooperationPeriod;
     }
 }

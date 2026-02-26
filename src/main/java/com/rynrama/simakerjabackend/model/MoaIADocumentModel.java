@@ -34,7 +34,7 @@ public class MoaIADocumentModel {
     @Column(name = "partner_name", nullable = false)
     private String partnerName;
 
-    @Column(name = "partner_number", nullable = false, length = 50)
+    @Column(name = "partner_number", length = 50)
     private String partnerNumber;
 
     @Column(name = "faculty_representative_name", nullable = false)
@@ -63,6 +63,9 @@ public class MoaIADocumentModel {
     @Column(name = "partner_address", nullable = false)
     private String partnerAddress;
 
+    @Column(name = "partner_cooperation_period", nullable = false)
+    private Integer partnerCooperationPeriod = 1;
+
     public MoaIADocumentModel() {
     }
 
@@ -77,7 +80,8 @@ public class MoaIADocumentModel {
             DocumentActivityType activityType,
             List<StudentSnapshotModel> studentSnapshots,
             String partnerLogoKey,
-            String partnerAddress
+            String partnerAddress,
+            Integer  partnerCooperationPeriod
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -90,6 +94,7 @@ public class MoaIADocumentModel {
         this.studentSnapshots = studentSnapshots;
         this.partnerLogoKey = partnerLogoKey;
         this.partnerAddress = partnerAddress;
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 
     public UUID getId() {
@@ -198,5 +203,13 @@ public class MoaIADocumentModel {
     public void addStudentSnapshot(StudentSnapshotModel snapshot) {
         studentSnapshots.add(snapshot);
         snapshot.setDocument(this);
+    }
+
+    public Integer getPartnerCooperationPeriod() {
+        return partnerCooperationPeriod;
+    }
+
+    public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 }
