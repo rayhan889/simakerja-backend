@@ -10,11 +10,9 @@ import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
-import com.rynrama.simakerjabackend.util.IndonesianNumberConverter;
-import com.rynrama.simakerjabackend.util.NumberToIndonesian;
-import com.rynrama.simakerjabackend.util.NumericRandomGenerator;
+import com.rynrama.simakerjabackend.util.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +21,12 @@ import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@Slf4j
 public class DocumentSubmissionService {
 
     private final SubmissionRepository submissionRepository;
@@ -129,10 +127,14 @@ public class DocumentSubmissionService {
             UUID userId,
             String search
     ) {
-        Page<MoaIADocumentModel> page = moAIADocumentRepository
+        Page<MoaIADocumentModel> moaIa = moAIADocumentRepository
                 .findAllMoAIADocumentsByUserEmail(pageable, userId, search);
 
-        return page.map(moAIADocumentMapper::toDto);
+        if (moaIa.getTotalElements() == 0) {
+            log.info("No moaIa documents found for userId: {}", userId);
+        }
+
+        return moaIa.map(moAIADocumentMapper::toDto);
     }
 
     public Page<StudentSubmissionPaginationDTO> findSubmissionsByUserIdAndMoAIAType(
@@ -157,6 +159,8 @@ public class DocumentSubmissionService {
             String userEmail,
             MoaIADocumentRequest moaIADocumentRequest
     ) throws Exception {
+        log.info("Saving document. userEmail={}", userEmail);
+
         NumericRandomGenerator numericRandomGenerator = new NumericRandomGenerator();
 
         submission.setSubmissionCode(numericRandomGenerator.generate(20));
@@ -167,6 +171,7 @@ public class DocumentSubmissionService {
                         ));
 
         if (!isStudentValid(user.getId())) {
+            log.error("Student with email={} not found", userEmail);
             throw new StudentNotValidException(
                     "student not have a valid nim and study program yet. Set it first"
             );
@@ -185,6 +190,7 @@ public class DocumentSubmissionService {
 
         submissionRepository.save(submission);
 
+        log.debug("Submission saved. submission type={}", submission.getSubmissionType());
         switch (submission.getSubmissionType()) {
             case SubmissionType.moa_ia -> saveMoaIADocument(submission, moaIADocumentRequest);
             case SubmissionType.cooperation_request -> saveCooperationRequestDocument();
@@ -202,7 +208,9 @@ public class DocumentSubmissionService {
     private void saveMoaIADocument(
             SubmissionModel submission,
             MoaIADocumentRequest moaIADocumentRequest
-    ) throws Exception {
+    ) {
+        log.info("Saving Moa Ia document. submissionId={}. partnerName={}", submission.getId(), moaIADocumentRequest.getPartnerName());
+
         var moaIADocument = new MoaIADocumentModel();
 
         moaIADocument.setSubmission(submission);
@@ -219,6 +227,7 @@ public class DocumentSubmissionService {
                 moaIADocumentRequest.getStudentSnapshots(),
                 moaIADocument
         );
+        log.info("Saving student snapshots. snapshot length={}", snapshotEntities.size());
         moaIADocument.setStudentSnapshots(snapshotEntities);
         moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
         moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
@@ -235,67 +244,14 @@ public class DocumentSubmissionService {
     private void saveVisitRequestDocument() {
     }
 
-//    teknik_informatika > Teknik Informatika
-    private static String formatString(String input) {
-        if (input == null || input.isBlank()) return input;
-
-        String[] words = input.replace("_", " ").toLowerCase().split(" ");
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                result.append(Character.toUpperCase(word.charAt(0)))
-                        .append(word.substring(1))
-                        .append(" ");
-            }
-        }
-
-        return result.toString().trim();
-    }
-
-//    for student snapshots: [dono, joko] > 1. Dono 2. Joko
-    private static String toNumberedHtmlList(List<StudentInfo> items) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < items.size(); i++) {
-            result.append(i + 1).append(". ").append(items.get(i).getFullName());
-            if (i < items.size() - 1) result.append("<br/>");
-        }
-        return result.toString();
-    }
-
-    public static String cleanFullname(String input) {
-        if (input == null || input.isBlank()) {
-            return input;
-        }
-
-        String result = input.replaceFirst("^\\d+_", "");
-
-        result = result.replaceFirst("\\s+(TI|SI|PTI)\\b.*", "");
-
-        result = result.replaceAll("[^A-Za-z\\s]", "");
-
-        result = result.trim().replaceAll("\\s+", " ");
-
-        String[] parts = result.toLowerCase().split(" ");
-        StringBuilder builder = new StringBuilder();
-
-        for (String part : parts) {
-            if (!part.isEmpty()) {
-                builder.append(Character.toUpperCase(part.charAt(0)))
-                        .append(part.substring(1))
-                        .append(" ");
-            }
-        }
-
-        return builder.toString().trim();
-    }
-
     public MoAIAPDFViewModel buildMoAIAData(String submissionId) throws Exception {
+        log.info("Building Moa IA document for PDF. submissionId={}", submissionId);
+
         MoAIAPDFViewModel data = new MoAIAPDFViewModel();
 
-        MoaIADocumentModel moaIAData = moAIADocumentRepository.
-                findBySubmissionId(submissionId).
-            orElseThrow(() ->
+        MoaIADocumentModel moaIAData = moAIADocumentRepository
+                .findBySubmissionId(submissionId)
+                .orElseThrow(() ->
                     new ResourceNotFoundException(
                             "MoA and IA document not found with submission id" + submissionId
                     )
@@ -309,6 +265,7 @@ public class DocumentSubmissionService {
         data.setPartnerName(moaIAData.getPartnerName());
 
         String partnerLogoPreviewUrl = minioService.getPresignedUrl(moaIAData.getPartnerLogoKey());
+        log.debug("PDF minio partnerLogoPreviewUrl={}", partnerLogoPreviewUrl);
 
         data.setPartnerLogoUrl(partnerLogoPreviewUrl);
         data.setPartnerNumber(moaIAData.getPartnerNumber());
@@ -316,7 +273,7 @@ public class DocumentSubmissionService {
         data.setPartnerRepresentativePosition(moaIAData.getPartnerRepresentativePosition());
         data.setPartnerAddress(moaIAData.getPartnerAddress());
         data.setPartnerCooperationperiod(moaIAData.getPartnerCooperationPeriod());
-        data.setPartnerCooperationPeriodIntext(NumberToIndonesian.toWord(moaIAData.getPartnerCooperationPeriod()));
+        data.setPartnerCooperationPeriodIntext(FormatNumber.toIndonesianWord(moaIAData.getPartnerCooperationPeriod()));
 
         String formattedActivityType = "";
         switch (moaIAData.getActivityType()) {
@@ -324,6 +281,7 @@ public class DocumentSubmissionService {
             case DocumentActivityType.kkn ->  formattedActivityType = "KKN";
             case DocumentActivityType.plp ->   formattedActivityType = "PLP";
         }
+        log.debug("PDF formattedActivityType={}", formattedActivityType);
         data.setActivityType(formattedActivityType);
 
         Instant submissionDate =  moaIAData.getSubmission().getSubmissionDate();
@@ -339,7 +297,7 @@ public class DocumentSubmissionService {
         String monthName = zdt.format(monthFormatter);
         String date = String.valueOf(zdt.getDayOfMonth());
         int year = zdt.getYear();
-        String yearInLongText = IndonesianNumberConverter.toWords(year);
+        String yearInLongText = FormatNumber.toLongIndonesianWord(year);
         String ddMMyyyFormatDate =  zdt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
         data.setDay(day);
@@ -355,7 +313,7 @@ public class DocumentSubmissionService {
             if (snapshot.getStudents() != null) {
                 for (StudentSnapshotStudentModel s : snapshot.getStudents()) {
                     studentInfos.add(new StudentInfo(
-                            cleanFullname(s.getFullName()),
+                            FormatString.formatFullname(s.getFullName()),
                             s.getEmail(),
                             s.getNim()
                     ));
@@ -363,9 +321,9 @@ public class DocumentSubmissionService {
             }
 
             StudentSnapshotDisplayDTO snapShotDTO = new StudentSnapshotDisplayDTO(
-                    formatString(snapshot.getStudyProgram()),
+                    FormatString.formatProgramStudy(snapshot.getStudyProgram()),
                     snapshot.getUnit(),
-                    toNumberedHtmlList(studentInfos),
+                    FormatNumber.toNumberedHtmlList(studentInfos),
                     snapshot.getTotal()
             );
             displayStudentSnapshotsDTO.add(snapShotDTO);
@@ -388,6 +346,8 @@ public class DocumentSubmissionService {
             String submissionId,
             UUID userId
     ) throws Exception {
+        log.info("Update submission. userId={}. submissionId={}", userId, submissionId);
+
         SubmissionModel submission = submissionRepository
                 .findById(submissionId)
                 .orElseThrow(() ->
@@ -397,6 +357,7 @@ public class DocumentSubmissionService {
                 );
 
         if (canEditMoaIa(userId, submission.getUser().getId())) {
+            log.error("Edit submission can be done by student who submitted it");
             throw new InsufficientResourceException(
                     "edit moIa only can be done by student who submitted it"
             );
@@ -409,6 +370,7 @@ public class DocumentSubmissionService {
                         submission.getStatus() == SubmissionStatus.completed ||
                             submission.getStatus() == SubmissionStatus.verified_staff
         ) {
+            log.error("Submission status already verified/completed by staff/adhoc");
             throw new BadRequestException("moaIa already verified/completed by staff/adhoc");
         }
 
@@ -425,6 +387,8 @@ public class DocumentSubmissionService {
     }
 
     private Boolean canEditMoaIa(UUID userId, UUID applicantId) {
+        log.info("canEditMoaIa: applicantId={}", applicantId);
+
         if (userId == null) return false;
         if (applicantId == null) return false;
 
@@ -435,6 +399,7 @@ public class DocumentSubmissionService {
             MoAIADocumentUpdateRequest request,
             String submissionId
     ) {
+        log.info("Update moa ia. submissionId={}", submissionId);
         MoaIADocumentModel moaIa = moAIADocumentRepository
                 .findBySubmissionId(submissionId)
                 .orElseThrow(() ->
