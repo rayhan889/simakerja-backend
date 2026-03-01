@@ -3,6 +3,10 @@ package com.rynrama.simakerjabackend.model;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 import org.jspecify.annotations.NonNull;
 
@@ -22,6 +26,10 @@ import java.util.UUID;
                 @UniqueConstraint(name = "uk_users_email", columnNames = "email")
         }
 )
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserModel {
 
     @Id
@@ -48,74 +56,6 @@ public class UserModel {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-
-    public UserModel() {
-    }
-
-    public UserModel(UUID id, String email, String fullName, String phoneNumber, UserRole role, String status, Instant createdAt) {
-        this.id = id;
-        this.email = email;
-        this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        this.role = role;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 }
