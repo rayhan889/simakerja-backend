@@ -10,11 +10,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -35,8 +37,7 @@ public class GenerateFileController {
     @GetMapping(value = "/moa-ia/{submission_id}", produces = MediaType.APPLICATION_PDF_VALUE)
     @PreAuthorize("hasAnyRole('STUDENT', 'STAFF')")
     public ResponseEntity<byte[]> generateFile(
-        @PathVariable("submission_id") String submissionId,
-        @AuthenticationPrincipal CustomUserPrincipal principal
+        @PathVariable("submission_id") String submissionId
     ) throws Exception {
 
         MoAIAPDFViewModel moaIaData = documentSubmissionService.buildMoAIAData(submissionId);
@@ -44,8 +45,7 @@ public class GenerateFileController {
 
         byte[] pdf = generateFileService.generatePdf(moaIaData);
 
-        String shortNim = principal.getEmail().replaceAll(".*\\.(\\d+)@.*", "$1");
-        String fileName = "moa_ia_" + shortNim + "_" + UUID.randomUUID() + ".pdf";
+        String fileName = "moa_ia_" + UUID.randomUUID() + ".pdf";
         System.out.println("PDF file generated: " + fileName);
 
         return ResponseEntity.ok()

@@ -1,24 +1,23 @@
 package com.rynrama.simakerjabackend.controller;
 
-import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.exception.InvalidEnumException;
 import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import com.rynrama.simakerjabackend.service.DocumentSubmissionService;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
-import okhttp3.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,14 +55,15 @@ public class DocumentSubmissionController {
     @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
     public ResponseEntity<GlobalAPIResponse<Page<MoAIADocumentDTO>>> getAllMoAIASubmissions(
             Pageable pageable,
-            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestParam(value = "search", required = false)  String search
     ) {
-        UUID userId = principal.getUser().getId();
+        String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
 
+        assert userId != null;
         var moaIa = documentService.findPaginatedMoAIA(
                 pageable,
-                userId,
+                UUID.fromString(userId),
                 search
         );
 
@@ -109,15 +109,17 @@ public class DocumentSubmissionController {
     @PostMapping("")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> submitDocument(
-        @Valid @RequestBody DocumentSubmissionRequest request,
-        @AuthenticationPrincipal CustomUserPrincipal principal
+        @Valid @RequestBody DocumentSubmissionRequest request
     ) throws Exception {
+        String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
+
         SubmissionModel submission = documentMapper.toModel(request);
 
-        String userEmail = principal.getEmail();
+        assert userId != null;
         SubmissionModel createdSubmission = documentService.saveDocument(
                 submission,
-                userEmail,
+                UUID.fromString(userId),
                 request.getMoaIa()
         );
 
@@ -143,12 +145,13 @@ public class DocumentSubmissionController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateDocument(
         @Valid @RequestBody DocumentUpdateRequest request,
-        @PathVariable("submission_id") String submissionId,
-        @AuthenticationPrincipal CustomUserPrincipal principal
+        @PathVariable("submission_id") String submissionId
     ) throws Exception {
-        var userId = principal.getUser().getId();
+        String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
 
-        SubmissionModel submission = documentService.updateDocument(request, submissionId, userId);
+        assert userId != null;
+        SubmissionModel submission = documentService.updateDocument(request, submissionId, UUID.fromString(userId));
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
