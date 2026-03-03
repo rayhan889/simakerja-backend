@@ -33,7 +33,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return path.startsWith("/oauth2/")
                 || path.startsWith("/login/oauth2/")
                 || path.equals("/api/v1/auth/refresh")
-                || path.equals("/api/v1/auth/logout");
+                || path.equals("/api/v1/auth/logout")
+                || path.equals("/api/v1/auth/login");
     }
 
     @Override

@@ -47,7 +47,8 @@ public class SecurityConfig {
                     // Public auth endpoints (cookie-based, no Bearer token)
                     auth.requestMatchers(
                             "/api/v1/auth/refresh",
-                            "/api/v1/auth/logout"
+                            "/api/v1/auth/logout",
+                            "/api/v1/auth/login"
                     ).permitAll();
                     // All other /api/v1/** require authentication (Bearer token)
                     auth.requestMatchers("/api/v1/**").authenticated();

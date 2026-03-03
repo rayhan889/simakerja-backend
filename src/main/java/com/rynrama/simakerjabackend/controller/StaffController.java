@@ -7,6 +7,7 @@ import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class StaffController {
     }
 
     @PutMapping("/verify-moa-ia/{submission_id}")
+    @PreAuthorize("hasAnyRole('STAFF', 'SUPERADMIN')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateSubmissionStatusToVerifiedByStaff(
             @Valid @RequestBody StaffVerifySubmissionRequest request,
             @PathVariable("submission_id") String submissionId

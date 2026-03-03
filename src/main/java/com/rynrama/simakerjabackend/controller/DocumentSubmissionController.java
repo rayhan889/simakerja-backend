@@ -129,7 +129,7 @@ public class DocumentSubmissionController {
     }
 
     @GetMapping("/partners")
-    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF', 'SUPERADMIN')")
     public ResponseEntity<GlobalAPIResponse<List<PartnerProfileDTO>>> getAllVerifiedExistingPartners(
             @RequestParam(value = "search", required = false)  String search
     ) {
