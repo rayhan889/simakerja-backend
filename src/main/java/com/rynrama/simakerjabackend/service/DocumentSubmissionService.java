@@ -156,22 +156,22 @@ public class DocumentSubmissionService {
     @Transactional
     public SubmissionModel saveDocument(
             SubmissionModel submission,
-            String userEmail,
+            UUID userId,
             MoaIADocumentRequest moaIADocumentRequest
     ) throws Exception {
-        log.info("Saving document. userEmail={}", userEmail);
+        log.info("Saving document. userId={}", userId);
 
         NumericRandomGenerator numericRandomGenerator = new NumericRandomGenerator();
 
         submission.setSubmissionCode(numericRandomGenerator.generate(20));
 
-        UserModel user = userRepository.findByEmail(userEmail)
+        UserModel user = userRepository.findById(userId)
                         .orElseThrow(() -> new UserNotFoundException(
-                                "user with email" + userEmail + " not found"
+                                "user with email" + userId + " not found"
                         ));
 
         if (!isStudentValid(user.getId())) {
-            log.error("Student with email={} not found", userEmail);
+            log.error("Student with email={} not found", userId);
             throw new StudentNotValidException(
                     "student not have a valid nim and study program yet. Set it first"
             );
