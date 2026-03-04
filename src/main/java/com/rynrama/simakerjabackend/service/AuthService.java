@@ -8,6 +8,7 @@ import com.rynrama.simakerjabackend.repository.StaffRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,27 +22,31 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class AuthService {
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final int LOCKOUT_DURATION_MINUTES = 15;
+
+    @Value("${app.max.failed.attempts}")
+    private int maxFailedAttempts;
 
     private final UserRepository userRepo;
     private final StaffRepository staffRepo;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthService(
             UserRepository userRepo,
             StaffRepository staffRepo,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            LoginAttemptService loginAttemptService
     ) {
         this.userRepo = userRepo;
         this.staffRepo = staffRepo;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
         this.jwtUtil = jwtUtil;
+        this.loginAttemptService = loginAttemptService;
     }
 
     public record LoginResult(
@@ -80,9 +85,10 @@ public class AuthService {
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
 //            handle failed attempt
-            handleAttemptFailed(user);
-            log.warn("Backdoor auth failed. Remaining attempts={}",  user.getFailedLoginAttempts());
-            throw new IllegalArgumentException("Password-based login failed. Remaining attempts=" + user.getFailedLoginAttempts());
+            loginAttemptService.handleFailedAttempt(user);
+            int remainingAttempts = maxFailedAttempts - user.getFailedLoginAttempts();
+            log.warn("Backdoor auth failed. Remaining attempts={}",  remainingAttempts);
+            throw new IllegalArgumentException("Password-based login failed. Remaining attempts=" + remainingAttempts);
         }
 
         user.setFailedLoginAttempts(0);
@@ -102,30 +108,12 @@ public class AuthService {
         return new LoginResult(accessToken, refreshToken, dto);
     }
 
-    public void handleAttemptFailed(UserModel user) {
-        int attempts = user.getFailedLoginAttempts() + 1;
-        user.setFailedLoginAttempts(attempts);
-
-        if (attempts > MAX_FAILED_ATTEMPTS) {
-            Instant lockUntil = Instant.now().plus(LOCKOUT_DURATION_MINUTES, ChronoUnit.MINUTES);
-            user.setLockedUntil(lockUntil);
-            log.warn("Account locked: email={}, until={}", user.getEmail(), lockUntil);
-        }
-
-        userRepo.save(user);
-    }
-
+    @Transactional
     public void changePassword(UUID userId, String currentPassword, String newPassword) {
         UserModel user = userRepo.findById(userId)
-                .orElseThrow(() -> {
-                    log.warn("User with id {} not found", userId);
-                    return new  IllegalArgumentException("User with id " + userId + " not found");
-                });
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (
-                (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) ||
-                        !passwordEncoder.matches(newPassword, user.getPasswordHash())
-        ) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
 
@@ -134,7 +122,7 @@ public class AuthService {
 
         refreshTokenService.revokeAllForUser(userId);
 
-        log.info("Password has changed for userId={}, all related refresh tokens revoked", userId);
+        log.info("Password changed for userId={}, all refresh tokens revoked", userId);
     }
 
     private AuthDTO buildAuthDTO(UserModel user, StaffModel staff) {
