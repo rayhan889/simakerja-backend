@@ -77,7 +77,7 @@ public class AuthController {
         if (cookie == null || cookie.getValue().isBlank()) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(GlobalAPIResponse.error("No refresh token provided"));
+                    .body(GlobalAPIResponse.error("No refresh token provided", "NO_REFRESH_TOKEN"));
         }
 
         try {
@@ -118,7 +118,7 @@ public class AuthController {
 
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(GlobalAPIResponse.error(e.getMessage()));
+                    .body(GlobalAPIResponse.error(e.getMessage(), "INVALID_REFRESH_TOKEN"));
         }
     }
 
@@ -195,18 +195,18 @@ public class AuthController {
 
         } catch (AuthService.AccountLockedException e) {
             return ResponseEntity
-                    .status(HttpStatus.LOCKED) // 423
-                    .body(GlobalAPIResponse.error(e.getMessage()));
+                    .status(HttpStatus.LOCKED)
+                    .body(GlobalAPIResponse.error(e.getMessage(), "ACCOUNT_LOCKED"));
 
         } catch (AuthService.ForbiddenLoginException e) {
             return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN) // 403
-                    .body(GlobalAPIResponse.error(e.getMessage()));
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(GlobalAPIResponse.error(e.getMessage(), "FORBIDDEN"));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED) // 401
-                    .body(GlobalAPIResponse.error(e.getMessage()));
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(GlobalAPIResponse.error(e.getMessage(), "INVALID_CREDENTIALS"));
         }
     }
 

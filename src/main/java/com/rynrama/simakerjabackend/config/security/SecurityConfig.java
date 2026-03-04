@@ -36,6 +36,9 @@ public class SecurityConfig {
     @Autowired
     private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
+    @Autowired
+    private OauthFailureHandler oauthFailureHandler;
+
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
@@ -63,6 +66,7 @@ public class SecurityConfig {
                                 .baseUri("/login/oauth2/code/*")
                         )
                         .successHandler(oauthSuccessHandler)
+                        .failureHandler(oauthFailureHandler)
                 )
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)

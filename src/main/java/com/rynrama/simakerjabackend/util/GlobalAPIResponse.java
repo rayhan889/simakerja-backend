@@ -5,6 +5,7 @@ public class GlobalAPIResponse<T> {
     private boolean success;
     private T data;
     private String message;
+    private String errorCode;
     private String timestamp;
 
     public GlobalAPIResponse() {
@@ -21,6 +22,15 @@ public class GlobalAPIResponse<T> {
         this.timestamp = java.time.OffsetDateTime.now().toString();
     }
 
+    public GlobalAPIResponse(boolean success, T data, String message, String errorCode) {
+        this.success = success;
+        this.data = data;
+        this.message = message;
+        this.errorCode = errorCode;
+        this.timestamp = java.time.OffsetDateTime.now().toString();
+    }
+
+
     public static <T> GlobalAPIResponse<T> success(T data) {
         return new GlobalAPIResponse<>(true, data, null);
     }
@@ -31,6 +41,10 @@ public class GlobalAPIResponse<T> {
 
     public static <T> GlobalAPIResponse<T> error(String message) {
         return new GlobalAPIResponse<>(false, null, message);
+    }
+
+    public static <T> GlobalAPIResponse<T> error(String message,  String errorCode) {
+        return new GlobalAPIResponse<>(false, null, message, errorCode);
     }
 
     public boolean isSuccess() {
@@ -63,5 +77,13 @@ public class GlobalAPIResponse<T> {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
     }
 }
