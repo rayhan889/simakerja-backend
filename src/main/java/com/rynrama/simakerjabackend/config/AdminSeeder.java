@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.UUID;
+
 @Component
 @Slf4j
 public class AdminSeeder implements CommandLineRunner {
@@ -27,6 +30,7 @@ public class AdminSeeder implements CommandLineRunner {
         log.info("AdminSeeder: starting..");
         String email = System.getenv("ADMIN_SEED_EMAIL");
         String password = System.getenv("ADMIN_SEED_PASSWORD");
+        String fullName = System.getenv("ADMIN_SEED_FULL_NAME");
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             log.warn("AdminSeeder: ADMIN_SEED_EMAIL or ADMIN_SEED_PASSWORD env vars is null or blank. Skipping...");
@@ -38,22 +42,30 @@ public class AdminSeeder implements CommandLineRunner {
             return;
         }
 
-        UserModel user = userRepo.findByEmail(email).orElse(null);
-
-        if (user == null) {
-            log.warn("AdminSeeder: user with email={} not found. Skipping...", email);
-            return;
-        }
-
-        user.setPasswordHash(passwordEncoder.encode(password));
-
         String promoteToSuperadmin = System.getenv("ADMIN_SEED_PROMOTE_TO_SUPERADMIN");
+
+        var role = UserRole.staff;
+
         if ("true".equalsIgnoreCase(promoteToSuperadmin)) {
-            user.setRole(UserRole.superadmin);
+            role = UserRole.superadmin;
             log.info("AdminSeeder: Promoting user {} to superadmin", email);
         }
 
+        if (userRepo.findByEmail(email).isPresent()) {
+            log.warn("AdminSeeder: User with email {} already exists. Skipping...", email);
+            return;
+        }
+
+        var user = new UserModel();
+
+        user.setEmail(email);
+        user.setFullName(fullName);
+        user.setRole(role);
+        user.setCreatedAt(Instant.now());
+        user.setPasswordHash(passwordEncoder.encode(password));
+
         userRepo.save(user);
+
         log.info("AdminSeeder: password set for user email={}, role={}", email, user.getRole());
     }
 }
