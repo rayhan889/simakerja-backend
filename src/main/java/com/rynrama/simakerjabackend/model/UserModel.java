@@ -67,4 +67,15 @@ public class UserModel {
 
     @Column(name = "locked_until")
     private Instant lockedUntil;
+
+    public UserModel(UUID id, String email, String fullName, String phoneNumber, UserRole role, String status, Instant createdAt, String passwordHash) {
+        this.id = id;
+        this.email = email;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.passwordHash = passwordHash;
+    }
 }
