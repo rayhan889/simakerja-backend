@@ -3,6 +3,10 @@ package com.rynrama.simakerjabackend.repository;
 import com.rynrama.simakerjabackend.dto.*;
 import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -76,6 +80,11 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
     select s from SubmissionModel s where s.id = :id
 """)
     Optional<SubmissionModel> findById(String id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000")}) // 5 second timeout
+    @Query("select s from SubmissionModel s where s.id = :id")
+    Optional<SubmissionModel> findByIdForUpdate(@Param("id") String id);
 
     @Query("""
         select s from SubmissionModel s
