@@ -8,8 +8,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -25,11 +27,15 @@ public class StaffController {
     @PutMapping("/verify-moa-ia/{submission_id}")
     @PreAuthorize("hasAnyRole('STAFF', 'SUPERADMIN')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateSubmissionStatusToVerifiedByStaff(
-            @Valid @RequestBody StaffVerifySubmissionRequest request,
             @PathVariable("submission_id") String submissionId
     ) throws Exception {
 
-        var submission = staffService.verifySubmissionByStaff(request, submissionId);
+        String userId = (String) Objects.requireNonNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        ).getPrincipal();
+
+        assert userId != null;
+        var submission = staffService.verifySubmissionByStaff(submissionId, UUID.fromString(userId));
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)

@@ -6,10 +6,7 @@ import com.rynrama.simakerjabackend.mapper.DocumentSubmissionMapper;
 import com.rynrama.simakerjabackend.mapper.MoAIADocumentMapper;
 import com.rynrama.simakerjabackend.mapper.StudentSnapshotMapper;
 import com.rynrama.simakerjabackend.model.*;
-import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
-import com.rynrama.simakerjabackend.repository.StudentRepository;
-import com.rynrama.simakerjabackend.repository.SubmissionRepository;
-import com.rynrama.simakerjabackend.repository.UserRepository;
+import com.rynrama.simakerjabackend.repository.*;
 import com.rynrama.simakerjabackend.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -36,6 +33,7 @@ public class DocumentSubmissionService {
     private final DocumentSubmissionMapper documentSubmissionMapper;
     private final StudentRepository studentRepository;
     private final MoAIADocumentMapper moAIADocumentMapper;
+    private final VerifiedPartnerRepository verifiedPartnerRepository;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
@@ -44,7 +42,8 @@ public class DocumentSubmissionService {
             MinioService minioService,
             DocumentSubmissionMapper documentSubmissionMapper,
             StudentRepository studentRepository,
-            MoAIADocumentMapper moAIADocumentMapper
+            MoAIADocumentMapper moAIADocumentMapper,
+            VerifiedPartnerRepository verifiedPartnerRepository
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
@@ -53,6 +52,7 @@ public class DocumentSubmissionService {
         this.documentSubmissionMapper = documentSubmissionMapper;
         this.studentRepository = studentRepository;
         this.moAIADocumentMapper = moAIADocumentMapper;
+        this.verifiedPartnerRepository = verifiedPartnerRepository;
     }
 
     public DocumentActivityType toValidDocumentActivityType(String value) {
@@ -337,7 +337,7 @@ public class DocumentSubmissionService {
     }
 
     public List<PartnerProfileDTO> findAllVerifiedExistingPartners(String search) {
-        return moAIADocumentRepository.findAllVerifiedExistingPartners(search);
+        return verifiedPartnerRepository.findAllValidVerifiedPartners(search);
     }
 
     @Transactional
