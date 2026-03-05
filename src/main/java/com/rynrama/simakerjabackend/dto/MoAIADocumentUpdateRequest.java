@@ -4,20 +4,17 @@ import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.MoAIADocumentType;
 import com.rynrama.simakerjabackend.model.StudentSnapshot;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.util.List;
 
 public class MoAIADocumentUpdateRequest {
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
+    @Pattern(regexp = "^[a-zA-Z0-9 .(),-]*$", message = "can't use any special characters")
     private String partnerName;
 
-    @NotBlank
+    @NotNull
     @Size(max = 50)
     @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
     private String partnerNumber;
@@ -49,6 +46,11 @@ public class MoAIADocumentUpdateRequest {
             message = "Invalid logo key format. Must be obtained from upload endpoint."
     )
     private String partnerLogoKey;
+
+    @NotNull
+    @Min(1)
+    @Max(7)
+    private Integer partnerCooperationPeriod;
 
     public MoAIADocumentUpdateRequest() {
     }
@@ -123,5 +125,13 @@ public class MoAIADocumentUpdateRequest {
 
     public void setPartnerLogoKey(String partnerLogoKey) {
         this.partnerLogoKey = partnerLogoKey;
+    }
+
+    public Integer getPartnerCooperationPeriod() {
+        return partnerCooperationPeriod;
+    }
+
+    public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
+        this.partnerCooperationPeriod = partnerCooperationPeriod;
     }
 }

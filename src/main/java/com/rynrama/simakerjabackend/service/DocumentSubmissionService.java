@@ -356,7 +356,7 @@ public class DocumentSubmissionService {
                         )
                 );
 
-        if (canEditMoaIa(userId, submission.getUser().getId())) {
+        if (!canEditMoaIa(userId, submission.getUser().getId())) {
             log.error("Edit submission can be done by student who submitted it");
             throw new InsufficientResourceException(
                     "edit moIa only can be done by student who submitted it"
@@ -424,6 +424,7 @@ public class DocumentSubmissionService {
 
         moaIa.setPartnerAddress(request.getPartnerAddress());
         moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
+        moaIa.setPartnerCooperationPeriod(request.getPartnerCooperationPeriod());
     }
 
 //    MoA IA Document Pagination for Staff
