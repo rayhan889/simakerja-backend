@@ -17,7 +17,7 @@ public class MoaIADocumentRequest {
     private MoAIADocumentType documentType;
 
     @NotNull
-    @Pattern(regexp = "^[a-zA-Z0-9 .,-]*$", message = "can't use any special characters")
+    @Pattern(regexp = "^[a-zA-Z0-9 .(),-]*$", message = "can't use any special characters")
     private String partnerName;
 
     @NotNull

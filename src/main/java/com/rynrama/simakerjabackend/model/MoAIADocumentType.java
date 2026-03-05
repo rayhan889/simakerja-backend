@@ -2,5 +2,6 @@ package com.rynrama.simakerjabackend.model;
 
 public enum MoAIADocumentType {
     moa,
-    ia
+    ia,
+    moa_ia
 }

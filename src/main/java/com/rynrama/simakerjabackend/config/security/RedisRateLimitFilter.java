@@ -3,6 +3,7 @@ package com.rynrama.simakerjabackend.config.security;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +11,11 @@ import java.io.IOException;
 import java.time.Duration;
 
 @Component
+@Slf4j
 public class RedisRateLimitFilter implements Filter {
     private final StringRedisTemplate stringRedisTemplate;
-    private static final int LIMIT = 10;
-    private static final long WINDOW_DURATION = 60;
+    private static final int LIMIT = 100;
+    private static final long WINDOW_DURATION = 60; // in seconds
 
     public RedisRateLimitFilter(StringRedisTemplate stringRedisTemplate) {
         this.stringRedisTemplate = stringRedisTemplate;
@@ -34,6 +36,7 @@ public class RedisRateLimitFilter implements Filter {
         }
 
         if (requests > LIMIT) {
+            log.warn("Request exceeds limit of " + LIMIT + " requests");
             httpResponse.setStatus(429);
             res.getWriter().flush();
             return;
