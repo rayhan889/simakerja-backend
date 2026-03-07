@@ -1,5 +1,7 @@
 package com.rynrama.simakerjabackend.config;
 
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,17 @@ public class MinioConfig {
 
     @Value("${minio.ssl}")
     private Boolean ssl;
+
+    @Bean
+    public boolean ensureBucketExists(
+            MinioClient minioClient, @Value("${minio.bucket.name}") String bucketName
+    ) throws Exception {
+        boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+        if (!exists) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        }
+        return exists;
+    }
 
     @Bean
     public MinioClient minioClient() {
