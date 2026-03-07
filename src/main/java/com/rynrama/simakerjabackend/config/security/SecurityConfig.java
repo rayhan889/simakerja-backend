@@ -51,7 +51,8 @@ public class SecurityConfig {
                     auth.requestMatchers(
                             "/api/v1/auth/refresh",
                             "/api/v1/auth/logout",
-                            "/api/v1/auth/login"
+                            "/api/v1/auth/login",
+                            "/actuator/**"
                     ).permitAll();
                     // All other /api/v1/** require authentication (Bearer token)
                     auth.requestMatchers("/api/v1/**").authenticated();
