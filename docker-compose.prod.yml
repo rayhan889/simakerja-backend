@@ -45,12 +45,13 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_SERVER_URL: https://storage.simakerja.com
     command: server --console-address ":9090" /data
     volumes:
       - simakerja_minio_data:/data
 
   spring-api:
-    image: ghcr.io/rayhan889/simakerja-backend:1.0.4
+    image: ghcr.io/rayhan889/simakerja-backend:1.0.6
     restart: unless-stopped
     networks:
       - simakerja_net

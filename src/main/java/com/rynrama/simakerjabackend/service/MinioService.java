@@ -3,6 +3,7 @@ package com.rynrama.simakerjabackend.service;
 import io.minio.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +20,10 @@ import java.util.UUID;
 public class MinioService {
 
     private static final Logger logger = LoggerFactory.getLogger(MinioService.class);
+
     private final MinioClient minioClient;
+
+    private final MinioClient presignedMinioClient;
 
     @Value("${minio.bucket.name}")
     private String bucketName;
@@ -27,8 +31,18 @@ public class MinioService {
     @Value("${minio.presigned.expiry}")
     private int presignedExpiryMinutes;
 
-    public MinioService(MinioClient minioClient) {
+    @Value("${minio.url}")
+    private String internalUrl;
+
+    @Value("${minio.public.url:#{null}}")
+    private String publicUrl;
+
+    public MinioService(
+            MinioClient minioClient,
+            @Qualifier("presignedMinioClient") MinioClient presignedMinioClient
+    ) {
         this.minioClient = minioClient;
+        this.presignedMinioClient = presignedMinioClient;
     }
 
     public String uploadPartnerLogo(MultipartFile file) throws Exception {
@@ -68,7 +82,20 @@ public class MinioService {
         return objectKey;
     }
 
+//    public presigned URL - for browser
     public String getPresignedUrl(String objectKey) throws Exception {
+        return presignedMinioClient.getPresignedObjectUrl(
+                GetPresignedObjectUrlArgs.builder()
+                        .method(Method.GET)
+                        .bucket(bucketName)
+                        .object(objectKey)
+                        .expiry(presignedExpiryMinutes)
+                        .build()
+        );
+    }
+
+//    internal presigned URL - for server side consumers to easily determined by docker network
+    public String getInternalPresignedUrl(String objectKey) throws Exception {
         return minioClient.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                         .method(Method.GET)

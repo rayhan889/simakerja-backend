@@ -264,7 +264,7 @@ public class DocumentSubmissionService {
         data.setFacultyAddress(moaIAData.getSubmission().getFacultyAddress());
         data.setPartnerName(moaIAData.getPartnerName());
 
-        String partnerLogoPreviewUrl = minioService.getPresignedUrl(moaIAData.getPartnerLogoKey());
+        String partnerLogoPreviewUrl = minioService.getInternalPresignedUrl(moaIAData.getPartnerLogoKey());
         log.debug("PDF minio partnerLogoPreviewUrl={}", partnerLogoPreviewUrl);
 
         data.setPartnerLogoUrl(partnerLogoPreviewUrl);
@@ -329,7 +329,7 @@ public class DocumentSubmissionService {
             displayStudentSnapshotsDTO.add(snapShotDTO);
         }
 
-        data.setUnesaLogoUrl(minioService.getPresignedUrl("unesa_logo.png"));
+        data.setUnesaLogoUrl(minioService.getInternalPresignedUrl("unesa_logo.png"));
 
         data.setStudentSnapshots(displayStudentSnapshotsDTO);
 
