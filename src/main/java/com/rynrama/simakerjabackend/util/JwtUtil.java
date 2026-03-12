@@ -1,5 +1,6 @@
 package com.rynrama.simakerjabackend.util;
 
+import com.rynrama.simakerjabackend.model.LecturerModel;
 import com.rynrama.simakerjabackend.model.StaffModel;
 import com.rynrama.simakerjabackend.model.StudentModel;
 import com.rynrama.simakerjabackend.model.UserModel;
@@ -51,6 +52,7 @@ public class JwtUtil {
         UserModel user,
         StudentModel student,
         StaffModel staff,
+        LecturerModel lecturer,
         String profilePicture
     ) {
         Map<String, Object> claims = new HashMap<String, Object>();
@@ -82,6 +84,19 @@ public class JwtUtil {
         if (staff != null) {
             if (staff.getNip() != null) {
                 claims.put("nip", staff.getNip());
+            }
+        }
+
+//        lecturer/adhoc config
+        if (lecturer != null) {
+            if (lecturer.getNip() != null) {
+                claims.put("nip", lecturer.getNip());
+            }
+            if (lecturer.getNidn() != null) {
+                claims.put("nidn", lecturer.getNidn());
+            }
+            if (lecturer.getStudyProgram() != null) {
+                claims.put("studyProgram", lecturer.getStudyProgram());
             }
         }
 
