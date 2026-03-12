@@ -56,16 +56,25 @@ public class SubmissionModel {
     @Column(name = "faculty_address", nullable = false)
     private String facultyAddress;
 
-//    TO BE IMPLEMENTED LATER
-//    private Instant adhocVerifiedAt;
-//    private AdhocModel adhoc;
-
     @Column(name = "staff_verified_at")
     private Instant staffVerifiedAt;
+
+    @Column(name = "staff_rejected_at")
+    private Instant staffRejectedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id")
     private StaffModel staff;
+
+    @Column(name = "lecturer_verified_at")
+    private Instant lecturerVerifiedAt;
+
+    @Column(name = "lecturer_rejected_at")
+    private Instant lecturerRejectedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lecturer_id")
+    private LecturerModel lecturer;
 
     @Column(name = "period", nullable = false)
     private LocalDate period;
@@ -75,13 +84,6 @@ public class SubmissionModel {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
-
-//    @OneToOne(
-//            mappedBy = "submission",
-//            cascade = CascadeType.ALL,
-//            orphanRemoval = true
-//    )
-//    private MoaIADocumentModel moaIa;
 
     public SubmissionModel() {
     }
@@ -98,7 +100,11 @@ public class SubmissionModel {
             Instant submissionDate,
             String facultyAddress ,
             Instant staffVerifiedAt,
+            Instant staffRejectedAt,
             StaffModel staff,
+            Instant lecturerVerifiedAt,
+            Instant lecturerRejectedAt,
+            LecturerModel lecturer,
             LocalDate period,
             Instant createdAt,
             Instant updatedAt
@@ -114,7 +120,11 @@ public class SubmissionModel {
         this.submissionDate = submissionDate;
         this.facultyAddress = facultyAddress;
         this.staffVerifiedAt = staffVerifiedAt;
+        this.staffRejectedAt = staffRejectedAt;
         this.staff = staff;
+        this.lecturerVerifiedAt = lecturerVerifiedAt;
+        this.lecturerRejectedAt = lecturerRejectedAt;
+        this.lecturer = lecturer;
         this.period = period;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -240,11 +250,35 @@ public class SubmissionModel {
         this.period = period;
     }
 
-//    public MoaIADocumentModel getMoaIa() {
-//        return moaIa;
-//    }
-//
-//    public void setMoaIa(MoaIADocumentModel moaIa) {
-//        this.moaIa = moaIa;
-//    }
+    public Instant getLecturerVerifiedAt() {
+        return lecturerVerifiedAt;
+    }
+
+    public void setLecturerVerifiedAt(Instant lecturerVerifiedAt) {
+        this.lecturerVerifiedAt = lecturerVerifiedAt;
+    }
+
+    public LecturerModel getLecturer() {
+        return lecturer;
+    }
+
+    public void setLecturer(LecturerModel lecturer) {
+        this.lecturer = lecturer;
+    }
+
+    public Instant getLecturerRejectedAt() {
+        return lecturerRejectedAt;
+    }
+
+    public void setLecturerRejectedAt(Instant lecturerRejectedAt) {
+        this.lecturerRejectedAt = lecturerRejectedAt;
+    }
+
+    public Instant getStaffRejectedAt() {
+        return staffRejectedAt;
+    }
+
+    public void setStaffRejectedAt(Instant staffRejectedAt) {
+        this.staffRejectedAt = staffRejectedAt;
+    }
 }

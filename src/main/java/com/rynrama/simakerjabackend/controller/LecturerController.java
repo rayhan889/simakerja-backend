@@ -1,9 +1,8 @@
 package com.rynrama.simakerjabackend.controller;
 
-import com.rynrama.simakerjabackend.dto.StaffVerifySubmissionRequest;
 import com.rynrama.simakerjabackend.dto.UpdateSubmissionRequest;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
-import com.rynrama.simakerjabackend.service.StaffService;
+import com.rynrama.simakerjabackend.service.LecturerService;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -16,28 +15,28 @@ import java.util.Objects;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/staffs")
-public class StaffController {
+@RequestMapping("/adhocs")
+@PreAuthorize("hasRole('LECTURER')")
+public class LecturerController {
 
-    private final StaffService staffService;
+    private final LecturerService lecturerService;
 
-    public StaffController(StaffService staffService) {
-        this.staffService = staffService;
+    public LecturerController(LecturerService lecturerService) {
+        this.lecturerService = lecturerService;
     }
 
     @PutMapping("/process-moa-ia/{submission_id}")
-    @PreAuthorize("hasAnyRole('STAFF', 'SUPERADMIN')")
-    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateSubmissionStatusToVerifiedByStaff(
+    public ResponseEntity<GlobalAPIResponse<SubmissionModel>> updateSubmissionStatusToVerifiedByAdhoc(
             @PathVariable("submission_id") String submissionId,
             @Valid @RequestBody UpdateSubmissionRequest request
-    ) throws Exception {
+            ) throws Exception {
 
         String userId = (String) Objects.requireNonNull(
                 SecurityContextHolder.getContext().getAuthentication()
         ).getPrincipal();
 
         assert userId != null;
-        var submission = staffService.processSubmissionByStaff(submissionId, request, UUID.fromString(userId));
+        var submission = lecturerService.processSubmissionByAdhoc(submissionId, request, UUID.fromString(userId));
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)

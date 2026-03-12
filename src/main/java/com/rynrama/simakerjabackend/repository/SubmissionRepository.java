@@ -1,6 +1,7 @@
 package com.rynrama.simakerjabackend.repository;
 
 import com.rynrama.simakerjabackend.dto.*;
+import com.rynrama.simakerjabackend.dto.AdhocSubmissionPaginationDTO;
 import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.SubmissionModel;
 import jakarta.persistence.LockModeType;
@@ -152,5 +153,58 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
             String partnerName,
             String period,
             DocumentActivityType activityType
+    );
+
+    @Query("""
+    select new com.rynrama.simakerjabackend.dto.AdhocSubmissionPaginationDTO(
+        s.period,
+        m.partnerName,
+        m.partnerNumber,
+        m.activityType,
+        count(s.id)
+    ) from SubmissionModel s
+        join MoaIADocumentModel m on s.id = m.submission.id
+            left join UserModel u on s.user.id = u.id
+                join StudentModel stu on u.id = stu.user.id
+                    where stu.studyProgram = :studyProgram
+                        and ( :search is null or :search = ''
+                                or lower(m.partnerName) like lower(concat('%', CAST(:search AS string), '%'))
+                                or lower(m.partnerNumber) like lower(concat('%', CAST(:search AS string), '%'))
+                            )
+                    group by s.period, m.partnerName, m.partnerNumber, m.activityType
+    """)
+    Page<AdhocSubmissionPaginationDTO> findAdhocSubmissionsPagination(
+            Pageable pageable,
+            String studyProgram,
+            @Param("search") String search
+    );
+
+    @Query("""
+    select new com.rynrama.simakerjabackend.dto.AdhocSubmissionPaginationDetailDTO(
+        s.id,
+            s.submissionCode,
+                u.fullName,
+                    s2.nim,
+                        s.status
+        ) from SubmissionModel s
+            join MoaIADocumentModel m on s.id = m.submission.id
+                join UserModel u on s.user.id = u.id
+                    left join StudentModel s2 on u.id = s2.user.id
+                        where m.partnerName = :partnerName
+                            and s2.studyProgram = :studyProgram 
+                                and function('to_char', s.period, 'YYYY-MM') = :period 
+                                    and m.activityType = :activityType
+                                        and ( :search is null or :search = ''
+                                            or lower(u.fullName) like lower(concat('%', CAST(:search AS string), '%'))
+                                            or lower(s2.nim) like lower(concat('%', CAST(:search AS string), '%'))
+                                        )
+    """)
+    Page<AdhocSubmissionPaginationDetailDTO> findAdhocSubmissionsPaginationDetail(
+            Pageable pageable,
+            @Param("search") String search,
+            String partnerName,
+            String period,
+            DocumentActivityType activityType,
+            String studyProgram
     );
 }
