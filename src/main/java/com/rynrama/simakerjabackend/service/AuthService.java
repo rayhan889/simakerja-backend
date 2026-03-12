@@ -1,9 +1,11 @@
 package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.dto.AuthDTO;
+import com.rynrama.simakerjabackend.model.LecturerModel;
 import com.rynrama.simakerjabackend.model.StaffModel;
 import com.rynrama.simakerjabackend.model.UserModel;
 import com.rynrama.simakerjabackend.model.UserRole;
+import com.rynrama.simakerjabackend.repository.LecturerRepository;
 import com.rynrama.simakerjabackend.repository.StaffRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
 import com.rynrama.simakerjabackend.util.JwtUtil;
@@ -28,6 +30,7 @@ public class AuthService {
 
     private final UserRepository userRepo;
     private final StaffRepository staffRepo;
+    private final LecturerRepository  lecturerRepo;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
@@ -36,6 +39,7 @@ public class AuthService {
     public AuthService(
             UserRepository userRepo,
             StaffRepository staffRepo,
+            LecturerRepository lecturerRepo,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
             JwtUtil jwtUtil,
@@ -43,6 +47,7 @@ public class AuthService {
     ) {
         this.userRepo = userRepo;
         this.staffRepo = staffRepo;
+        this.lecturerRepo = lecturerRepo;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
         this.jwtUtil = jwtUtil;
@@ -68,7 +73,11 @@ public class AuthService {
             throw new DisabledException("User with email " + email + " is disabled");
         }
 
-        if (user.getRole() != UserRole.staff && user.getRole() != UserRole.superadmin) {
+        if (
+                user.getRole() != UserRole.staff &&
+                user.getRole() != UserRole.superadmin &&
+                user.getRole() != UserRole.lecturer
+        ) {
             log.warn("Backdoor auth rejected. email={} and role={} no allowed.",  email, user.getRole());
             throw new ForbiddenLoginException("Password-based login is not available for this account");
         }
@@ -101,9 +110,11 @@ public class AuthService {
 
         StaffModel staff = staffRepo.findByUserId(user.getId())
                 .orElse(null);
-        String accessToken = jwtUtil.generateToken(user, null, staff, user.getProfilePictureUrl());
+        LecturerModel lecturer = lecturerRepo.findByUserId(user.getId())
+                .orElse(null);
+        String accessToken = jwtUtil.generateToken(user, null, staff, lecturer, user.getProfilePictureUrl());
 
-        AuthDTO dto = buildAuthDTO(user, staff);
+        AuthDTO dto = buildAuthDTO(user, staff, lecturer);
 
         return new LoginResult(accessToken, refreshToken, dto);
     }
@@ -125,7 +136,7 @@ public class AuthService {
         log.info("Password changed for userId={}, all refresh tokens revoked", userId);
     }
 
-    private AuthDTO buildAuthDTO(UserModel user, StaffModel staff) {
+    private AuthDTO buildAuthDTO(UserModel user, StaffModel staff,  LecturerModel lecturer) {
         AuthDTO dto = new AuthDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
@@ -140,6 +151,12 @@ public class AuthService {
 
         if (staff != null) {
             dto.setNip(staff.getNip());
+        }
+
+        if (lecturer != null) {
+            dto.setNip(lecturer.getNip());
+            dto.setNidn(lecturer.getNidn());
+            dto.setStudyProgram(lecturer.getStudyProgram());
         }
 
         return dto;

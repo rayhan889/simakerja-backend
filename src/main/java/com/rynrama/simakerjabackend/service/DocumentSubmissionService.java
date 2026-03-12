@@ -34,6 +34,7 @@ public class DocumentSubmissionService {
     private final StudentRepository studentRepository;
     private final MoAIADocumentMapper moAIADocumentMapper;
     private final VerifiedPartnerRepository verifiedPartnerRepository;
+    private final LecturerRepository lecturerRepository;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
@@ -43,7 +44,8 @@ public class DocumentSubmissionService {
             DocumentSubmissionMapper documentSubmissionMapper,
             StudentRepository studentRepository,
             MoAIADocumentMapper moAIADocumentMapper,
-            VerifiedPartnerRepository verifiedPartnerRepository
+            VerifiedPartnerRepository verifiedPartnerRepository,
+            LecturerRepository lecturerRepository
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
@@ -53,6 +55,7 @@ public class DocumentSubmissionService {
         this.studentRepository = studentRepository;
         this.moAIADocumentMapper = moAIADocumentMapper;
         this.verifiedPartnerRepository = verifiedPartnerRepository;
+        this.lecturerRepository = lecturerRepository;
     }
 
     public DocumentActivityType toValidDocumentActivityType(String value) {
@@ -364,6 +367,9 @@ public class DocumentSubmissionService {
         }
 
         submission.setNotes(request.getNotes());
+        submission.setStatus(SubmissionStatus.in_process);
+        submission.setStaffVerifiedAt(null);
+        submission.setLecturerVerifiedAt(null);
 
         if (
                 submission.getStatus() == SubmissionStatus.verified_adhoc ||
@@ -519,6 +525,127 @@ public class DocumentSubmissionService {
     }
 
     private Pageable staffSubmissionPaginationDetailSort(Pageable pageable) {
+        Sort requested = pageable.getSort();
+
+        if (requested == null || requested.isUnsorted()) {
+            Sort defaultSort = Sort.by(Sort.Order.desc("u.fullName"));
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), defaultSort);
+        }
+
+        Sort mapped = Sort.unsorted();
+
+        for (Sort.Order order : requested) {
+            String key = order.getProperty();
+            if (key == null) continue;
+
+            String normalized = key.trim();
+
+            if (normalized.equals("nim")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "s2.nim"));
+                continue;
+            }
+
+        }
+
+        if (mapped.isUnsorted()) {
+            mapped = Sort.by(Sort.Order.desc("u.fullName"));
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), mapped);
+    }
+
+    public LecturerModel findLecturerByUserId(UUID userId) {
+        return lecturerRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    log.warn("No lecturer found for userId {}", userId);
+                    return new ResourceNotFoundException("No lecturer found for userId " + userId);
+                });
+    }
+
+    //    MoA IA Document Pagination for Adhoc
+    public Page<AdhocSubmissionPaginationDTO> findAdhocSubmissionsPagination(
+            Pageable pageable,
+            String search,
+            UUID userId
+    ) {
+        var adhoc = findLecturerByUserId(userId);
+        var adhocStudyProgram = adhoc.getStudyProgram();
+
+        Pageable sort = lecturerSubmissionPaginationSort(pageable);
+        return submissionRepository.findAdhocSubmissionsPagination(sort, adhocStudyProgram, search);
+    }
+
+    //    MoA IA Document Pagination detail for Adhoc
+    public Page<AdhocSubmissionPaginationDetailDTO> findAdhocSubmissionsPaginationDetail(
+            Pageable pageable,
+            String search,
+            String partnerName,
+            String period,
+            String activityType,
+            UUID userId
+    ) throws InvalidEnumException {
+        var validActivityType = toValidDocumentActivityType(activityType);
+        if (validActivityType == null) {
+            throw new InvalidEnumException(
+                    activityType + " is not a valid activity type"
+            );
+        }
+
+        var adhoc = findLecturerByUserId(userId);
+        var adhocStudyProgram = adhoc.getStudyProgram();
+
+        Pageable sort = lecturerSubmissionPaginationDetailSort(pageable);
+        return submissionRepository.findAdhocSubmissionsPaginationDetail(
+                sort,
+                search,
+                partnerName,
+                period,
+                validActivityType,
+                adhocStudyProgram
+        );
+    }
+
+    private Pageable lecturerSubmissionPaginationSort(Pageable pageable) {
+        Sort requested = pageable.getSort();
+
+        if (requested == null || requested.isUnsorted()) {
+            Sort defaultSort = Sort.by(Sort.Order.desc("period"));
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), defaultSort);
+        }
+
+        Sort mapped = Sort.unsorted();
+
+        for (Sort.Order order : requested) {
+            String key = order.getProperty();
+            if (key == null) continue;
+
+            String normalized = key.trim();
+
+            if (normalized.equals("period")) {
+                mapped = mapped.and(Sort.by(new Sort.Order(order.getDirection(), "period")));
+                continue;
+            }
+
+            if (normalized.equals("partnerName") || normalized.equals("partner_name")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "m.partnerName"));
+                continue;
+            }
+
+            if (normalized.equals("partnerNumber") || normalized.equals("partner_number")) {
+                mapped = mapped.and(JpaSort.unsafe(order.getDirection(), "m.partnerNumber"));
+                continue;
+            }
+
+        }
+
+        if (mapped.isUnsorted()) {
+            mapped = Sort.by(Sort.Order.desc("period"));
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), mapped);
+    }
+
+    private Pageable lecturerSubmissionPaginationDetailSort(Pageable pageable) {
         Sort requested = pageable.getSort();
 
         if (requested == null || requested.isUnsorted()) {

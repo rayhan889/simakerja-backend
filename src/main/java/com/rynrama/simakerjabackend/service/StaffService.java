@@ -1,6 +1,7 @@
 package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.dto.StaffVerifySubmissionRequest;
+import com.rynrama.simakerjabackend.dto.UpdateSubmissionRequest;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
@@ -40,8 +41,9 @@ public class StaffService {
     }
 
     @Transactional
-    public SubmissionModel verifySubmissionByStaff(
+    public SubmissionModel processSubmissionByStaff(
             String submissionId,
+            UpdateSubmissionRequest request,
             UUID staffUserId
     ) throws BadRequestException {
         log.info("Verifying submission={} by staff", submissionId);
@@ -61,9 +63,12 @@ public class StaffService {
             throw new BadRequestException("Submission is currently being verified by another staff member. Please try again.");
         }
 
-        if (!isVerifiable(submission)) {
-            log.warn("Submission={} is not verifiable", submissionId);
-            throw new BadRequestException("submission cannot be verified by staff anymore");
+        ProcessableCheckResponse processableCheckResponse = (ProcessableCheckResponse) checkProcessible(submission, request);
+        var errMsg = processableCheckResponse.errMessage();
+        var isProcessible = processableCheckResponse.isProcessable();
+        if (!errMsg.isEmpty() && !isProcessible) {
+            log.warn("Submission={} is not verifiable. Reason={}", submissionId, errMsg);
+            throw new IllegalArgumentException("submission cannot be verified by staff. Reason: " + errMsg);
         }
 
         StaffModel staff = staffRepo
@@ -75,25 +80,41 @@ public class StaffService {
                     );
                 });
 
-        var moaIa = moAIADocumentRepo
-                .findBySubmissionId(submissionId)
-                .orElseThrow(() -> {
-                    log.warn("Cannot found moaia document with id={}", submissionId);
-                    return new ResourceNotFoundException("moaia document with id: " + submissionId + " not found");
-                });
+        Instant now = Instant.now();
+        switch (request.getSubmissionStatus()) {
+            case SubmissionStatus.verified_staff -> {
+                var moaIa = moAIADocumentRepo
+                        .findBySubmissionId(submissionId)
+                        .orElseThrow(() -> {
+                            log.warn("Cannot found moaia document with id={}", submissionId);
+                            return new ResourceNotFoundException("moaia document with id: " + submissionId + " not found");
+                        });
 
-        if (isPartnerAlreadyVerified(moaIa)) {
-            log.info("Partner={}, already verified. Skip creation of new verified partner", moaIa.getPartnerName());
-        } else {
-            createVerifiedPartner(moaIa);
+                if (isPartnerAlreadyVerified(moaIa)) {
+                    log.info("Partner={}, already verified. Skip creation of new verified partner", moaIa.getPartnerName());
+                } else {
+                    createVerifiedPartner(moaIa);
+                }
+
+                submission.setStatus(SubmissionStatus.verified_staff);
+                if (submission.getStaff() == null) submission.setStaff(staff);
+                submission.setStaffVerifiedAt(now);
+                submission.setNotes("");
+
+                log.info("Submission={} has been verified", submissionId);
+            }
+            case SubmissionStatus.rejected_staff -> {
+                submission.setStatus(SubmissionStatus.rejected_staff);
+                submission.setStaffRejectedAt(now);
+                submission.setNotes(request.getNotes());
+                submission.setLecturerVerifiedAt(null);
+                if (submission.getStaff() == null) submission.setStaff(staff);
+
+//                TODO: add another field for staff rejected at -> similar to lecturer
+                log.info("Submission={} has been rejected", submissionId);
+            }
         }
 
-        Instant now = Instant.now();
-        submission.setStatus(SubmissionStatus.verified_staff);
-        submission.setStaff(staff);
-        submission.setStaffVerifiedAt(now);
-
-        log.info("Submission={} has been verified", submissionId);
         return submission;
     }
 
@@ -132,11 +153,55 @@ public class StaffService {
         );
     }
 
-    private static Boolean isVerifiable(SubmissionModel submission) {
-        if (submission == null) return false;
+    public record ProcessableCheckResponse(
+            String errMessage,
+            Boolean isProcessable
+    ) {}
 
-        if (submission.getStaff() != null || submission.getStaffVerifiedAt() != null) return false;
+    private static ProcessableCheckResponse checkProcessible(SubmissionModel submission, UpdateSubmissionRequest request) {
+        if (submission == null) return new ProcessableCheckResponse(
+                "submission cannot be null or empty",
+                false
+        );
 
-        return !submission.getStatus().equals(SubmissionStatus.verified_staff);
+        if (
+                request.getSubmissionStatus() != SubmissionStatus.verified_staff &&
+                request.getSubmissionStatus() != SubmissionStatus.rejected_staff
+        ) return new ProcessableCheckResponse(
+                "submission status can only be either verified staff or rejected by staff",
+                false
+        );
+
+        if (submission.getLecturer() == null && submission.getLecturerVerifiedAt() == null) return new ProcessableCheckResponse(
+                "submission must be verified by adhoc first",
+                false
+        );
+
+        if (request.getSubmissionStatus() == SubmissionStatus.rejected_staff && (
+            submission.getStaff() != null && submission.getStatus() == SubmissionStatus.rejected_staff)
+        ) return new ProcessableCheckResponse(
+                "submission already rejected by staff. Approve it if it's already correct",
+                false
+        );
+
+        if (request.getSubmissionStatus() == SubmissionStatus.verified_staff && (
+                submission.getLecturer() != null && submission.getStaff() == null && submission.getStatus() == SubmissionStatus.rejected_adhoc)
+        ) return new ProcessableCheckResponse(
+                "submission got rejected by adhoc and hasn't been verified yet. Wait until it gets approved by them",
+                false
+        );
+
+        if (
+                (submission.getLecturer() != null && submission.getLecturerVerifiedAt() != null) &&
+                (submission.getStaff() != null && submission.getStaffVerifiedAt() != null)
+        ) return new  ProcessableCheckResponse(
+                "submission already verified.",
+                false
+        );
+
+        return new ProcessableCheckResponse(
+                "",
+                true
+        );
     }
 }

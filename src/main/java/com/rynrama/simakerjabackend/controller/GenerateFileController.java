@@ -35,7 +35,7 @@ public class GenerateFileController {
     }
 
     @GetMapping(value = "/moa-ia/{submission_id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    @PreAuthorize("hasAnyRole('STUDENT', 'STAFF')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'STAFF', 'LECTURER')")
     public ResponseEntity<byte[]> generateFile(
         @PathVariable("submission_id") String submissionId
     ) throws Exception {

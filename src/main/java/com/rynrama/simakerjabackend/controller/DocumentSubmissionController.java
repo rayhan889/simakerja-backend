@@ -217,4 +217,54 @@ public class DocumentSubmissionController {
                 .status(HttpStatus.OK)
                 .body(GlobalAPIResponse.success(header));
     }
+
+//    Adhoc
+    @GetMapping("/moa-ia/adhoc")
+    @PreAuthorize("hasRole('LECTURER')")
+    public ResponseEntity<GlobalAPIResponse<Page<AdhocSubmissionPaginationDTO>>> getAdhocSubmissionsPagination(
+            Pageable pageable,
+            @RequestParam(value = "search", required = false)  String search
+    ) {
+        String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
+
+        assert userId != null;
+        var submissions = documentService.findAdhocSubmissionsPagination(
+                pageable,
+                search,
+                UUID.fromString(userId)
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(submissions));
+    }
+
+    @GetMapping("/moa-ia/detail/adhoc")
+    @PreAuthorize("hasRole('LECTURER')")
+    public ResponseEntity<GlobalAPIResponse<Page<AdhocSubmissionPaginationDetailDTO>>> getAdhocSubmissionsPaginationDetail(
+            Pageable pageable,
+            @RequestParam(value = "search", required = false)  String search,
+            @RequestParam(value = "partner_name") String partnerName,
+            @RequestParam(value = "period") String period,
+            @RequestParam(value = "activity_type") String activityType
+    ) throws InvalidEnumException {
+        String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
+
+        assert userId != null;
+        var submissions = documentService.findAdhocSubmissionsPaginationDetail(
+                pageable,
+                search,
+                partnerName,
+                period,
+                activityType,
+                UUID.fromString(userId)
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(GlobalAPIResponse.success(submissions));
+    }
+
 }

@@ -4,9 +4,11 @@ import com.rynrama.simakerjabackend.config.security.CustomUserPrincipal;
 import com.rynrama.simakerjabackend.dto.AuthDTO;
 import com.rynrama.simakerjabackend.dto.BackdoorLoginRequestDTO;
 import com.rynrama.simakerjabackend.dto.ChangePasswordRequestDTO;
+import com.rynrama.simakerjabackend.model.LecturerModel;
 import com.rynrama.simakerjabackend.model.StaffModel;
 import com.rynrama.simakerjabackend.model.StudentModel;
 import com.rynrama.simakerjabackend.model.UserModel;
+import com.rynrama.simakerjabackend.repository.LecturerRepository;
 import com.rynrama.simakerjabackend.repository.StaffRepository;
 import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.UserRepository;
@@ -41,6 +43,7 @@ public class AuthController {
     private final UserRepository userRepo;
     private final StudentRepository  studentRepo;
     private final StaffRepository staffRepo;
+    private final LecturerRepository lecturerRepo;
     private final JwtUtil  jwtUtil;
     private final AuthService authService;
 
@@ -55,6 +58,7 @@ public class AuthController {
             UserRepository userRepo,
             StudentRepository studentRepo,
             StaffRepository staffRepo,
+            LecturerRepository lecturerRepo,
             JwtUtil jwtUtil,
             AuthService authService
     )
@@ -63,6 +67,7 @@ public class AuthController {
         this.userRepo = userRepo;
         this.studentRepo = studentRepo;
         this.staffRepo = staffRepo;
+        this.lecturerRepo = lecturerRepo;
         this.jwtUtil = jwtUtil;
         this.authService = authService;
     }
@@ -100,17 +105,19 @@ public class AuthController {
 
             StudentModel student = null;
             StaffModel staff = null;
+            LecturerModel lecturer = null;
 
             switch (user.getRole()) {
                 case student -> student = studentRepo.findByUserId(user.getId()).orElse(null);
                 case staff -> staff = staffRepo.findByUserId(user.getId()).orElse(null);
+                case lecturer ->  lecturer = lecturerRepo.findByUserId(user.getId()).orElse(null);
             }
 
-            String accessToken = jwtUtil.generateToken(user, student, staff, user.getProfilePictureUrl());
+            String accessToken = jwtUtil.generateToken(user, student, staff, lecturer, user.getProfilePictureUrl());
 
             Map<String, Object> data = new HashMap<>();
             data.put("accessToken", accessToken);
-            data.put("user", buildAuthDTO(user, student, staff));
+            data.put("user", buildAuthDTO(user, student, staff, lecturer));
 
             return ResponseEntity.ok(GlobalAPIResponse.success(data));
         } catch (IllegalArgumentException e) {
@@ -139,13 +146,15 @@ public class AuthController {
 
         StudentModel student = null;
         StaffModel staff = null;
+        LecturerModel lecturer = null;
 
         switch (user.getRole()) {
             case student -> student = studentRepo.findByUserId(user.getId()).orElse(null);
             case staff -> staff = staffRepo.findByUserId(user.getId()).orElse(null);
+            case lecturer ->   lecturer = lecturerRepo.findByUserId(user.getId()).orElse(null);
         }
 
-        AuthDTO authInfo = buildAuthDTO(user, student, staff);
+        AuthDTO authInfo = buildAuthDTO(user, student, staff, lecturer);
 
         return ResponseEntity.ok(GlobalAPIResponse.success(authInfo));
     }
@@ -235,7 +244,7 @@ public class AuthController {
         }
     }
 
-    private AuthDTO buildAuthDTO(UserModel user, StudentModel student, StaffModel staff) {
+    private AuthDTO buildAuthDTO(UserModel user, StudentModel student, StaffModel staff, LecturerModel lecturer) {
         AuthDTO dto = new AuthDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
@@ -255,6 +264,12 @@ public class AuthController {
 
         if (staff != null) {
             dto.setNip(staff.getNip());
+        }
+
+        if (lecturer != null) {
+            dto.setNip(lecturer.getNip());
+            dto.setNidn(lecturer.getNidn());
+            dto.setStudyProgram(lecturer.getStudyProgram());
         }
 
         return dto;
