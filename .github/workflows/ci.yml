@@ -14,6 +14,26 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_DB: simakerjadb_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+
     steps:
 # clone repos onto runner for the subsequent steps can access pom.xml and source code
       - name: Checkout code
@@ -42,6 +62,20 @@ jobs:
 
 # delete old build. re-verify: runs full cycle, compile, do unit tests and run integration tests
       - name: Build and run tests
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/simakerjadb_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET_KEY: dummy_secret_key_which_must_be_long_enough_for_hs256!
+          GOOGLE_CLIENT_ID: dummy_google_client
+          GOOGLE_SECRET_KEY: dummy_google_secret
+          MINIO_ACCESS_KEY_ID: dummy_minio_access
+          MINIO_SECRET_ACCESS_KEY: dummy_minio_secret
+          MINIO_ENDPOINT: http://localhost:9000
+          ADMIN_SEED_EMAIL: admin@test.com
+          ADMIN_SEED_PASSWORD: testpassword
         run: ./mvnw clean verify -B # -B to remove progress bar
 
       - name: Upload tests results
