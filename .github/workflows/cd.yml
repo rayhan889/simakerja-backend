@@ -115,7 +115,6 @@ jobs:
           echo 'Deployment completed!'
 
       - name: Wait service to be healthy
-        env:
         run: |
           cd $VPS_DEPLOY_PATH
           echo 'Waiting for service to become healthy...'
