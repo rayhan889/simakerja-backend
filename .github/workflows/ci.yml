@@ -1,0 +1,102 @@
+name: ci.yml - Build & Test
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '25'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_DB: simakerjadb_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+
+      minio:
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
+        env:
+          MINIO_ROOT_USER: dummy_minio_access
+          MINIO_ROOT_PASSWORD: dummy_minio_secret
+        ports:
+          - 9000:9000
+        command: server /data
+
+    steps:
+# clone repos onto runner for the subsequent steps can access pom.xml and source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+# install java sdk on the runner and caching deps for maven
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
+
+# prevent downloading packages all the time. caching it and only install if resh packgs exists
+      - name: Cache maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+# ensure executable maven wrapper(mvnw) permission
+      - name: Create executable mvnw
+        run: chmod +x ./mvnw
+
+# delete old build. re-verify: runs full cycle, compile, do unit tests and run integration tests
+      - name: Build and run tests
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/simakerjadb_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET_KEY: Dj3SPagswjjB32UZhncFc3S+DkmRZfc1s7Mmthvv8d0=
+          GOOGLE_CLIENT_ID: dummy_google_client
+          GOOGLE_SECRET_KEY: dummy_google_secret
+          MINIO_ACCESS_KEY_ID: dummy_minio_access
+          MINIO_SECRET_ACCESS_KEY: dummy_minio_secret
+          MINIO_ENDPOINT: http://localhost:9000
+          ADMIN_SEED_EMAIL: admin@test.com
+          ADMIN_SEED_PASSWORD: testpassword
+          CORS_ORIGINS: http://localhost:8080
+          JWT_EXPIRATION_MS: 600000
+          JWT_REFRESH_EXPIRATION_MS: 604800000
+        run: ./mvnw clean verify -B # -B to remove progress bar
+
+      - name: Upload tests results
+        if: always() # this ensures report progress on any condition(fail or success)
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+
+      - name: Check for vulnerabilities (optional)
+        run: ./mvnw dependency:tree -B
+        continue-on-error: true
