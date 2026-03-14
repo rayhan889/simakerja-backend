@@ -107,9 +107,9 @@ jobs:
         run: |
           cd $VPS_DEPLOY_PATH
           echo 'Pulling latest image...'
-          docker compose -f docker-compose.prod.yml pull spring-api
+          docker compose --env-file .env.prod -f docker-compose.prod.yml pull spring-api
           echo 'Restarting spring-api service...'
-          docker compose -f docker-compose.prod.yml up -d spring-api
+          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d spring-api
           echo 'Cleaning up old images...'
           docker image prune -f
           echo 'Deployment completed!'
@@ -119,9 +119,9 @@ jobs:
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
           echo 'Waiting for service to become healthy...'
-          timeout 60 bash -c "until docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
+          timeout 60 bash -c "until docker compose --env-file .env.prod -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
           echo 'Service status:'
-          docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
+          docker compose --env-file .env.prod -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
 
       - name: Verify deployment
         run: |
