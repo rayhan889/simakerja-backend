@@ -105,6 +105,8 @@ jobs:
           MINIO_ENDPOINT: http://localhost:9000
           ADMIN_SEED_EMAIL: admin@test.com
           ADMIN_SEED_PASSWORD: testpassword
+          ADMIN_SEED_PROMOTE_TO_SUPERADMIN: true
+          ADMIN_SEED_FULL_NAME: Super admin
           CORS_ORIGINS: http://localhost:8080
           JWT_EXPIRATION_MS: 600000
           JWT_REFRESH_EXPIRATION_MS: 604800000
