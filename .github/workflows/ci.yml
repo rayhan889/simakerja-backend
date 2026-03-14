@@ -34,6 +34,15 @@ jobs:
         ports:
           - 6379:6379
 
+      minio:
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
+        env:
+          MINIO_ROOT_USER: dummy_minio_access
+          MINIO_ROOT_PASSWORD: dummy_minio_secret
+        ports:
+          - 9000:9000
+        command: server /data
+
     steps:
 # clone repos onto runner for the subsequent steps can access pom.xml and source code
       - name: Checkout code
