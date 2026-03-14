@@ -76,6 +76,9 @@ jobs:
           MINIO_ENDPOINT: http://localhost:9000
           ADMIN_SEED_EMAIL: admin@test.com
           ADMIN_SEED_PASSWORD: testpassword
+          CORS_ORIGINS: http://localhost:8080
+          JWT_EXPIRATION_MS: 600000
+          JWT_REFRESH_EXPIRATION_MS: 604800000
         run: ./mvnw clean verify -B # -B to remove progress bar
 
       - name: Upload tests results
