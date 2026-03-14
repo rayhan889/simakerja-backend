@@ -51,7 +51,7 @@ services:
       - simakerja_minio_data:/data
 
   spring-api:
-    image: ghcr.io/rayhan889/simakerja-backend:1.0.7
+    image: ghcr.io/rayhan889/simakerja-backend:latest
     restart: unless-stopped
     networks:
       - simakerja_net
