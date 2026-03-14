@@ -98,67 +98,36 @@ jobs:
   deploy-to-vps:
     name: Deploy to VPS
     needs: version-and-build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Install Cloudflared
-        run: |
-          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
-          mkdir -p ~/.ssh
-          echo "Host ${{ secrets.VPS_HOST }}" > ~/.ssh/config
-          echo "  ProxyCommand cloudflared access ssh --hostname %h" >> ~/.ssh/config
-
-      - name: Deploy via native SSH
+      - name: Deploy application
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
-          # Save private key securely
-          echo "${{ secrets.VPS_SSH_KEY }}" > private_key
-          # Make key readable only by the runner user, otherwise SSH will reject it
-          chmod 600 private_key
-          
-          # Run the deploy commands over SSH using the tunnel and disable strict host checking
-          ssh -o StrictHostKeyChecking=no -i private_key $VPS_USERNAME@$VPS_HOST "
-            cd $VPS_DEPLOY_PATH
-            echo 'Pulling latest image...'
-            docker compose -f docker-compose.prod.yml pull spring-api
-            echo 'Restarting spring-api service...'
-            docker compose -f docker-compose.prod.yml up -d spring-api
-            echo 'Cleaning up old images...'
-            docker image prune -f
-            echo 'Deployment completed!'
-          "
+          cd $VPS_DEPLOY_PATH
+          echo 'Pulling latest image...'
+          docker compose -f docker-compose.prod.yml pull spring-api
+          echo 'Restarting spring-api service...'
+          docker compose -f docker-compose.prod.yml up -d spring-api
+          echo 'Cleaning up old images...'
+          docker image prune -f
+          echo 'Deployment completed!'
 
       - name: Wait service to be healthy
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key $VPS_USERNAME@$VPS_HOST "
-            echo 'Waiting for service to become healthy...'
-            timeout 60 bash -c 'until docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q \"healthy\"; do echo \"Waiting...\"; sleep 5; done' || echo \"Warning: Health check timeout\"
-            echo 'Service status:'
-            docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
-          "
+          echo 'Waiting for service to become healthy...'
+          timeout 60 bash -c "until docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
+          echo 'Service status:'
+          docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
 
       - name: Verify deployment
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key $VPS_USERNAME@$VPS_HOST "
-            echo 'Testing actuator health endpoint...'
-            curl -f http://localhost:8080/actuator/health || (echo \"Health check failed!\" && exit 1)
-            echo 'Deployment verified successfully!'
-          "
-
-      - name: Cleanup Private Key
-        if: always()
-        run: rm -f private_key
+          echo 'Testing actuator health endpoint...'
+          curl -f http://localhost:8080/actuator/health || (echo "Health check failed!" && exit 1)
+          echo 'Deployment verified successfully!'
       
       - name: Notify success deployment
         if: success()
