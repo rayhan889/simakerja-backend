@@ -39,6 +39,7 @@ jobs:
         env:
           MINIO_ROOT_USER: dummy_minio_access
           MINIO_ROOT_PASSWORD: dummy_minio_secret
+          MINIO_VOLUMES: /data
         ports:
           - 9000:9000
         options: >-
@@ -46,7 +47,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          server /data
 
     steps:
 # clone repos onto runner for the subsequent steps can access pom.xml and source code
