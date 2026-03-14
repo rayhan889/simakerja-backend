@@ -108,49 +108,58 @@ jobs:
           mkdir -p ~/.ssh
           echo "Host ${{ secrets.VPS_HOST }}" > ~/.ssh/config
           echo "  ProxyCommand cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          ssh-keyscan ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: '22'
-          script: |
-            cd ${{ secrets.VPS_DEPLOY_PATH }}
-            echo "Pulling latest image..."
+      - name: Deploy via native SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          # Save private key securely
+          echo "${{ secrets.VPS_SSH_KEY }}" > private_key
+          # Make key readable only by the runner user, otherwise SSH will reject it
+          chmod 600 private_key
+          
+          # Run the deploy commands over SSH using the tunnel
+          ssh -i private_key $VPS_USERNAME@$VPS_HOST "
+            cd $VPS_DEPLOY_PATH
+            echo 'Pulling latest image...'
             docker compose -f docker-compose.prod.yml pull spring-api
-            echo "Restarting spring-api service..."
+            echo 'Restarting spring-api service...'
             docker compose -f docker-compose.prod.yml up -d spring-api
-            echo "Cleaning up old images..."
+            echo 'Cleaning up old images...'
             docker image prune -f
-            echo "Deployment completed!"
-      
-      
+            echo 'Deployment completed!'
+          "
+
       - name: Wait service to be healthy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: '22'
-          script: |
-            echo "Waiting for service to become healthy..."
-            timeout 60 bash -c 'until docker compose -f ${{ secrets.VPS_DEPLOY_PATH }}/docker-compose.prod.yml ps spring-api | grep -q "healthy"; do echo "Waiting..."; sleep 5; done' || echo "Warning: Health check timeout"
-            echo "Service status:"
-            docker compose -f ${{ secrets.VPS_DEPLOY_PATH }}/docker-compose.prod.yml ps spring-api
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          ssh -i private_key $VPS_USERNAME@$VPS_HOST "
+            echo 'Waiting for service to become healthy...'
+            timeout 60 bash -c 'until docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q \"healthy\"; do echo \"Waiting...\"; sleep 5; done' || echo \"Warning: Health check timeout\"
+            echo 'Service status:'
+            docker compose -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
+          "
 
       - name: Verify deployment
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          script: |
-            echo "Testing actuator health endpoint..."
-            curl -f http://localhost:8080/actuator/health || (echo "Health check failed!" && exit 1)
-            echo "Deployment verified successfully!"
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+        run: |
+          ssh -i private_key $VPS_USERNAME@$VPS_HOST "
+            echo 'Testing actuator health endpoint...'
+            curl -f http://localhost:8080/actuator/health || (echo \"Health check failed!\" && exit 1)
+            echo 'Deployment verified successfully!'
+          "
+
+      - name: Cleanup Private Key
+        if: always()
+        run: rm -f private_key
       
       - name: Notify success deployment
         if: success()
