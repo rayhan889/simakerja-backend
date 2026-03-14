@@ -99,11 +99,11 @@ jobs:
     name: Deploy to VPS
     needs: version-and-build
     runs-on: self-hosted
+    env:
+      VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
 
     steps:
       - name: Deploy application
-        env:
-          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
           cd $VPS_DEPLOY_PATH
           echo 'Pulling latest image...'
@@ -116,15 +116,16 @@ jobs:
 
       - name: Wait service to be healthy
         env:
-          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
+          cd $VPS_DEPLOY_PATH
           echo 'Waiting for service to become healthy...'
-          timeout 60 bash -c "until docker compose --env-file .env.prod -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
+          timeout 60 bash -c "until docker compose --env-file .env.prod -f docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
           echo 'Service status:'
           docker compose --env-file .env.prod -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
 
       - name: Verify deployment
         run: |
+          cd $VPS_DEPLOY_PATH
           echo 'Testing actuator health endpoint...'
           curl -f http://localhost:8080/actuator/health || (echo "Health check failed!" && exit 1)
           echo 'Deployment verified successfully!'
@@ -132,6 +133,7 @@ jobs:
       - name: Notify success deployment
         if: success()
         run: |
+          cd $VPS_DEPLOY_PATH
           echo "Deployment successful!"
           echo "Version: ${{ needs.version-and-build.outputs.new_version }}"
           echo "Tag: ${{ needs.version-and-build.outputs.new_tag }}"
@@ -139,5 +141,6 @@ jobs:
       - name: Notify deployment failure
         if: failure()
         run: |
+          cd $VPS_DEPLOY_PATH
           echo "Deployment failed!"
           echo "Check the logs and rollback if necessary."
