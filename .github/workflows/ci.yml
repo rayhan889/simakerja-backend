@@ -68,7 +68,7 @@ jobs:
           POSTGRES_PASSWORD: testpassword
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-          JWT_SECRET_KEY: dummy_secret_key_which_must_be_long_enough_for_hs256!
+          JWT_SECRET_KEY: Dj3SPagswjjB32UZhncFc3S+DkmRZfc1s7Mmthvv8d0=
           GOOGLE_CLIENT_ID: dummy_google_client
           GOOGLE_SECRET_KEY: dummy_google_secret
           MINIO_ACCESS_KEY_ID: dummy_minio_access
