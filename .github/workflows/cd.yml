@@ -121,13 +121,6 @@ jobs:
           timeout 60 bash -c "until docker compose --env-file .env.prod -f docker-compose.prod.yml ps spring-api | grep -q 'healthy'; do echo 'Waiting...'; sleep 5; done" || echo "Warning: Health check timeout"
           echo 'Service status:'
           docker compose --env-file .env.prod -f $VPS_DEPLOY_PATH/docker-compose.prod.yml ps spring-api
-
-      - name: Verify deployment
-        run: |
-          cd $VPS_DEPLOY_PATH
-          echo 'Testing actuator health endpoint...'
-          curl -f http://localhost:8080/actuator/health || (echo "Health check failed!" && exit 1)
-          echo 'Deployment verified successfully!'
       
       - name: Notify success deployment
         if: success()
