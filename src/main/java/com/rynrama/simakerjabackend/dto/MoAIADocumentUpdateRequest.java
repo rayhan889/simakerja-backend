@@ -52,6 +52,14 @@ public class MoAIADocumentUpdateRequest {
     @Max(7)
     private Integer partnerCooperationPeriod;
 
+    @Pattern(
+            regexp = "^scanned-documents/[a-f0-9\\-]{36}/[a-f0-9\\-]{36}\\.pdf$",
+            message = "Invalid document key format. Must be a valid scanned-document path."
+    )
+    private String scannedDocumentKey;
+
+    private double averageConfidence;
+
     public MoAIADocumentUpdateRequest() {
     }
 
@@ -133,5 +141,21 @@ public class MoAIADocumentUpdateRequest {
 
     public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+    }
+
+    public String getScannedDocumentKey() {
+        return scannedDocumentKey;
+    }
+
+    public void setScannedDocumentKey(String scannedDocumentKey) {
+        this.scannedDocumentKey = scannedDocumentKey;
+    }
+
+    public double getAverageConfidence() {
+        return averageConfidence;
+    }
+
+    public void setAverageConfidence(double averageConfidence) {
+        this.averageConfidence = averageConfidence;
     }
 }
