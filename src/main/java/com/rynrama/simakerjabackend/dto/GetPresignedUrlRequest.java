@@ -5,11 +5,7 @@ import jakarta.validation.constraints.Pattern;
 
 public class GetPresignedUrlRequest {
 
-    @NotBlank(message = "Partner logo is required. Please upload a logo first.")
-    @Pattern(
-            regexp = "^partner-logos/[a-f0-9\\-]{36}$",
-            message = "Invalid logo key format. Must be obtained from upload endpoint."
-    )
+    @NotBlank(message = "object key is required. Please upload first.")
     private String objectKey;
 
     public GetPresignedUrlRequest() {

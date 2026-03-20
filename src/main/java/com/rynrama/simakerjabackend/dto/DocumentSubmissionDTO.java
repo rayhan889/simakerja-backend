@@ -27,6 +27,9 @@ public class DocumentSubmissionDTO implements DocumentDetails {
 
     private MoAIADocumentDTO moaIa;
 
+    private Instant lecturerVerifiedAt;
+    private Instant staffVerifiedAt;
+
     public DocumentSubmissionDTO(
             String id,
             UserModel user,
@@ -35,7 +38,9 @@ public class DocumentSubmissionDTO implements DocumentDetails {
             SubmissionStatus status,
             String notes,
             String faculty,
-            Instant submissionDate
+            Instant submissionDate,
+            Instant lecturerVerifiedAt,
+            Instant staffVerifiedAt
     ) {
         this.id = id;
         this.user = user;
@@ -45,6 +50,8 @@ public class DocumentSubmissionDTO implements DocumentDetails {
         this.notes = notes;
         this.faculty = faculty;
         this.submissionDate = submissionDate;
+        this.lecturerVerifiedAt = lecturerVerifiedAt;
+        this.staffVerifiedAt = staffVerifiedAt;
     }
 
     public DocumentSubmissionDTO(String id, UserModel user, String submissionCode, SubmissionType submissionType, SubmissionStatus status, String notes, String faculty, Instant submissionDate, String facultyLetterNumber, String facultyAddress, Instant createdAt, Instant updatedAt, MoAIADocumentDTO moaIa) {
@@ -169,5 +176,21 @@ public class DocumentSubmissionDTO implements DocumentDetails {
 
     public void setMoaIa(MoAIADocumentDTO moaIa) {
         this.moaIa = moaIa;
+    }
+
+    public Instant getLecturerVerifiedAt() {
+        return lecturerVerifiedAt;
+    }
+
+    public void setLecturerVerifiedAt(Instant lecturerVerifiedAt) {
+        this.lecturerVerifiedAt = lecturerVerifiedAt;
+    }
+
+    public Instant getStaffVerifiedAt() {
+        return staffVerifiedAt;
+    }
+
+    public void setStaffVerifiedAt(Instant staffVerifiedAt) {
+        this.staffVerifiedAt = staffVerifiedAt;
     }
 }

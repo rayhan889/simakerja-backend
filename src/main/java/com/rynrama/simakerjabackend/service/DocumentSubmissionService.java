@@ -366,18 +366,22 @@ public class DocumentSubmissionService {
             );
         }
 
-        submission.setNotes(request.getNotes());
-        submission.setStatus(SubmissionStatus.in_process);
-        submission.setStaffVerifiedAt(null);
-        submission.setLecturerVerifiedAt(null);
+        if (!isMoaIaEditable(submission)) {
+            log.error("Submission is not editable in its current state. status={}", submission.getStatus());
+            throw new BadRequestException(
+                    "Submission is not editable. It may be waiting for staff review or already completed."
+            );
+        }
 
-        if (
-                submission.getStatus() == SubmissionStatus.verified_adhoc ||
-                        submission.getStatus() == SubmissionStatus.completed ||
-                            submission.getStatus() == SubmissionStatus.verified_staff
-        ) {
-            log.error("Submission status already verified/completed by staff/adhoc");
-            throw new BadRequestException("moaIa already verified/completed by staff/adhoc");
+        boolean finalization = isFinalizationMode(submission);
+
+        if (!finalization) {
+            submission.setNotes(request.getNotes());
+            submission.setStatus(SubmissionStatus.in_process);
+            submission.setStaffVerifiedAt(null);
+            submission.setStaffRejectedAt(null);
+            submission.setLecturerVerifiedAt(null);
+            submission.setLecturerRejectedAt(null);
         }
 
         switch (submission.getSubmissionType()) {
@@ -385,11 +389,49 @@ public class DocumentSubmissionService {
                 if (request.getMoaIa() == null) {
                     throw new BadRequestException("moaIa is required");
                 }
-                updateMoaIa(request.getMoaIa(), submission.getId());
+                updateMoaIa(request.getMoaIa(), submission, finalization);
             }
         }
 
+        submission.setUpdatedAt(Instant.now());
         return submission;
+    }
+
+    private Boolean isMoaIaEditable(SubmissionModel submission) {
+        if (submission == null) return false;
+
+        boolean lecturerVerified = submission.getLecturer() != null
+                && submission.getLecturerVerifiedAt() != null;
+        boolean staffNotReviewedYet = submission.getStaff() == null
+                && submission.getStaffVerifiedAt() == null
+                && submission.getStaffRejectedAt() == null;
+        if (lecturerVerified && staffNotReviewedYet) {
+            return false;
+        }
+
+        boolean bothVerified = lecturerVerified
+                && submission.getStaff() != null
+                && submission.getStaffVerifiedAt() != null;
+        if (bothVerified) {
+            return true;
+        }
+
+        if (submission.getStatus() == SubmissionStatus.rejected_adhoc) {
+            return true;
+        }
+
+        if (submission.getStatus() == SubmissionStatus.in_process) {
+            return true;
+        }
+        return false;
+    }
+
+    private Boolean isFinalizationMode(SubmissionModel submission) {
+        if (submission == null) return false;
+        return submission.getLecturer() != null
+                && submission.getLecturerVerifiedAt() != null
+                && submission.getStaff() != null
+                && submission.getStaffVerifiedAt() != null;
     }
 
     private Boolean canEditMoaIa(UUID userId, UUID applicantId) {
@@ -403,34 +445,42 @@ public class DocumentSubmissionService {
 
     public void updateMoaIa(
             MoAIADocumentUpdateRequest request,
-            String submissionId
-    ) {
-        log.info("Update moa ia. submissionId={}", submissionId);
+            SubmissionModel submission,
+            Boolean finalization
+    ) throws BadRequestException {
+        log.info("Update moa ia. submissionId={}. finalization={}", submission.getId(), finalization);
         MoaIADocumentModel moaIa = moAIADocumentRepository
-                .findBySubmissionId(submissionId)
+                .findBySubmissionId(submission.getId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Moa IA with submission id: " + submissionId + " not found"
+                                "Moa IA with submission id: " + submission.getId() + " not found"
                         )
                 );
 
-        moaIa.setPartnerName(request.getPartnerName());
-        moaIa.setPartnerNumber(request.getPartnerNumber());
-        moaIa.setFacultyRepresentativeName(request.getFacultyRepresentativeName());
-        moaIa.setPartnerRepresentativeName(request.getPartnerRepresentativeName());
-        moaIa.setPartnerRepresentativePosition(request.getPartnerRepresentativePosition());
-        moaIa.setActivityType(request.getActivityType());
-
-        moaIa.clearStudentSnapshots();
-        var snapshotEntities = StudentSnapshotMapper.toEntities(
-                request.getStudentSnapshots(),
-                moaIa
-        );
-        moaIa.getStudentSnapshots().addAll(snapshotEntities);
-
-        moaIa.setPartnerAddress(request.getPartnerAddress());
-        moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
-        moaIa.setPartnerCooperationPeriod(request.getPartnerCooperationPeriod());
+        if (finalization) {
+            if (request.getScannedDocumentKey() == null || request.getScannedDocumentKey().isEmpty()) {
+                throw new BadRequestException("Scanned document is required for finalization");
+            }
+            moaIa.setScannedDocumentKey(request.getScannedDocumentKey());
+            moaIa.setSendScannedAt(Instant.now());
+            moaIa.setScannedDocumentOcrConfidentScore(request.getAverageConfidence());
+        } else {
+            moaIa.setPartnerName(request.getPartnerName());
+            moaIa.setPartnerNumber(request.getPartnerNumber());
+            moaIa.setFacultyRepresentativeName(request.getFacultyRepresentativeName());
+            moaIa.setPartnerRepresentativeName(request.getPartnerRepresentativeName());
+            moaIa.setPartnerRepresentativePosition(request.getPartnerRepresentativePosition());
+            moaIa.setActivityType(request.getActivityType());
+            moaIa.clearStudentSnapshots();
+            var snapshotEntities = StudentSnapshotMapper.toEntities(
+                    request.getStudentSnapshots(),
+                    moaIa
+            );
+            moaIa.getStudentSnapshots().addAll(snapshotEntities);
+            moaIa.setPartnerAddress(request.getPartnerAddress());
+            moaIa.setPartnerLogoKey(request.getPartnerLogoKey());
+            moaIa.setPartnerCooperationPeriod(request.getPartnerCooperationPeriod());
+        }
     }
 
 //    MoA IA Document Pagination for Staff
