@@ -148,8 +148,9 @@ public class MinioService {
                         .build()
         );
 
-        logger.info("Uploaded scanned document to MinIO: {} (confidence: {:.1f}%, anchors: {}/8)",
-                objectKey, ocrResult.getAverageConfidence(), ocrResult.getAnchorMatchCount());
+        logger.info("Uploaded scanned document to MinIO: {} (confidence: {}%, anchors: {}/{})",
+                objectKey, String.format("%.1f", ocrResult.getAverageConfidence()),
+                ocrResult.getAnchorMatchCount(), 7);
 
         return new ScannedDocumentUploadResult(objectKey, ocrResult);
     }

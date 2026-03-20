@@ -1,6 +1,7 @@
 package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.dto.OcrResult;
+import jakarta.annotation.PostConstruct;
 import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -14,7 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,6 +51,40 @@ public class OcrService {
     ) {
         this.tessdataPath = tessdataPath;
         this.ocrDpi = ocrDpi;
+    }
+
+    @PostConstruct
+    public void validateTessdataOnStartup() {
+        logger.info("Validating tessdata on startup");
+
+        logger.info("OCR config. Tessdata path: {}, DPI: {}", tessdataPath, ocrDpi);
+
+        Path tessdataDir =  Paths.get(tessdataPath);
+        if (!Files.isDirectory(tessdataDir)) {
+            logger.error("Tessdata directtory not found");
+            return;
+        }
+
+        Path indTrainedData = tessdataDir.resolve("ind.traineddata");
+        if (Files.exists(indTrainedData)) {
+            try {
+                long sizeBytes = Files.size(indTrainedData);
+                logger.info("Found ind.traineddata ({} bytes) at {}", sizeBytes, indTrainedData);
+            } catch (IOException e) {
+                logger.warn("Could not read ind.traineddata size: {}", e.getMessage());
+            }
+        } else {
+            logger.error("ind.traineddata NOT FOUND at {}. OCR will fail!", indTrainedData);
+        }
+
+        try {
+            Tesseract test = new Tesseract();
+            test.setDatapath(tessdataPath);
+            test.setLanguage("ind");
+            logger.info("Tesseract native library loaded successfully");
+        } catch (Exception e) {
+            logger.error("Failed to initialize Tesseract: {}", e.getMessage(), e);
+        }
     }
 
     public OcrResult processDocument(byte[] pdfBytes) throws IOException, TesseractException {
@@ -101,8 +140,8 @@ public class OcrService {
         int anchorMatchCount = matchedAnchors.size();
         boolean templateMatched = anchorMatchCount >= MINIMUM_ANCHOR_MATCHES;
 
-        logger.info("OCR complete — {} page(s), avg confidence: {:.1f}%, anchors matched: {}/{} ({})",
-                pageTexts.size(), averageConfidence,
+        logger.info("OCR complete — {} page(s), avg confidence: {}%, anchors matched: {}/{} ({})",
+                pageTexts.size(), String.format("%.1f", averageConfidence),
                 anchorMatchCount, ANCHOR_KEYWORDS.size(),
                 templateMatched ? "PASS" : "FAIL");
 

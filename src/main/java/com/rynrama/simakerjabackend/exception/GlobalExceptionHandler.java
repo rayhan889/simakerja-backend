@@ -2,6 +2,8 @@ package com.rynrama.simakerjabackend.exception;
 
 import com.rynrama.simakerjabackend.dto.ErrorResponse;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
@@ -118,5 +122,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(GlobalAPIResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<GlobalAPIResponse<Object>> handleUnexpectedException(Exception ex) {
+        logger.error("Unhandled exception caught: {}", ex.getMessage(), ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(GlobalAPIResponse.error(
+                        "An unexpected error occurred. Check server logs for details. Error: " + ex.getClass().getSimpleName()
+                ));
     }
 }

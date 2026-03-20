@@ -25,6 +25,12 @@ RUN apt-get update && \
 
 ENV TESSDATA_PATH=/usr/share/tesseract-ocr/5/tessdata
 
+RUN echo "=== Tessdata verification ===" && \
+    ls -la ${TESSDATA_PATH}/ && \
+    test -f ${TESSDATA_PATH}/ind.traineddata && \
+    echo "ind.traineddata OK" || \
+    (echo "ERROR: ind.traineddata not found!" && exit 1)
+
 RUN groupadd --system appgroup && \
     useradd --system --gid appgroup --no-create-home appuser
 
