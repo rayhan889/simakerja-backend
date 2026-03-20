@@ -26,9 +26,9 @@
     <!-- Override for prod/staging: use JSON + FILE appenders -->
     <springProfile name="prod,staging">
         <root level="INFO">
-            <appender-ref ref="JSON_STDOUT"/>
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="CONSOLE"/>
         </root>
+        <logger name="com.rynrama.simakerjabackend" level="DEBUG"/>
         <logger name="org.springframework" level="WARN"/>
         <logger name="org.hibernate.SQL" level="DEBUG"/>
         <logger name="com.zaxxer.hikari" level="WARN"/>
