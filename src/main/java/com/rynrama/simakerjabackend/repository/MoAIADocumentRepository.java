@@ -95,5 +95,5 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
             on m.submission.id = s.id
                 where s.id = :submissionId
 """)
-    Optional<MoaIADocumentModel> findBySubmissionId(String submissionId);
+    Optional<MoaIADocumentModel>    findBySubmissionId(String submissionId);
 }

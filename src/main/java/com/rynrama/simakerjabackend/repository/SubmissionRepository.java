@@ -28,7 +28,9 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
             s.status,
             s.notes,
             s.faculty,
-            s.submissionDate
+            s.submissionDate,
+            s.lecturerVerifiedAt,
+            s.staffVerifiedAt
         )
         from SubmissionModel s where ( :status is null or :status = '' or s.status = :status )
             and ( :subsType is null or :subsType = '' or s.submissionType = :subsType)

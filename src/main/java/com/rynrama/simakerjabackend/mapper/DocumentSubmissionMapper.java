@@ -42,6 +42,8 @@ public class DocumentSubmissionMapper {
         dto.setFacultyAddress(submission.getFacultyAddress());
         dto.setCreatedAt(submission.getCreatedAt());
         dto.setUpdatedAt(submission.getUpdatedAt());
+        dto.setStaffVerifiedAt(submission.getStaffVerifiedAt());
+        dto.setLecturerVerifiedAt(submission.getLecturerVerifiedAt());
 
         if (moaIaDocument != null) {
             var studentSnapshotsDto = StudentSnapshotMapper.toDtos(
@@ -59,7 +61,9 @@ public class DocumentSubmissionMapper {
                     studentSnapshotsDto,
                     moaIaDocument.getPartnerAddress(),
                     moaIaDocument.getPartnerLogoKey(),
-                    moaIaDocument.getPartnerCooperationPeriod()
+                    moaIaDocument.getPartnerCooperationPeriod(),
+                    moaIaDocument.getScannedDocumentKey(),
+                    moaIaDocument.getScannedDocumentOcrConfidentScore()
             );
             dto.setMoaIa(moaIaDTO);
         }

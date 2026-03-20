@@ -20,6 +20,8 @@ public class MoAIADocumentDTO implements DocumentDetails {
     private final String partnerAddress;
     private final String partnerLogoKey;
     private final Integer partnerCooperationPeriod;
+    private final String scannedDocumentKey;
+    private final double averageConfidence;
 
     @JsonCreator
     public MoAIADocumentDTO(
@@ -33,7 +35,9 @@ public class MoAIADocumentDTO implements DocumentDetails {
             @JsonProperty("studentSnapshots") List<StudentSnapshot> studentSnapshots,
             @JsonProperty("partnerAddress") String partnerAddress,
             @JsonProperty("partnerLogoKey") String partnerLogoKey,
-            @JsonProperty("partnerCooperationPeriod") Integer partnerCooperationPeriod
+            @JsonProperty("partnerCooperationPeriod") Integer partnerCooperationPeriod,
+            @JsonProperty("scannedDocumentKey") String scannedDocumentKey,
+            @JsonProperty("averageConfidence") double averageConfidence
     ) {
         this.partnerName = partnerName;
         this.partnerNumber = partnerNumber;
@@ -46,6 +50,8 @@ public class MoAIADocumentDTO implements DocumentDetails {
         this.partnerAddress = partnerAddress;
         this.partnerLogoKey = partnerLogoKey;
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+        this.scannedDocumentKey = scannedDocumentKey;
+        this.averageConfidence = averageConfidence;
     }
 
     public String getPartnerName() {
@@ -90,5 +96,13 @@ public class MoAIADocumentDTO implements DocumentDetails {
 
     public Integer getPartnerCooperationPeriod() {
         return partnerCooperationPeriod;
+    }
+
+    public String getScannedDocumentKey() {
+        return scannedDocumentKey;
+    }
+
+    public double getAverageConfidence() {
+        return averageConfidence;
     }
 }

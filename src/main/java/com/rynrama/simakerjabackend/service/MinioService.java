@@ -1,10 +1,12 @@
 package com.rynrama.simakerjabackend.service;
 
+import com.rynrama.simakerjabackend.dto.OcrResult;
 import io.minio.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +28,8 @@ public class MinioService {
 
     private final MinioClient presignedMinioClient;
 
+    private final OcrService ocrService;
+
     @Value("${minio.bucket.name}")
     private String bucketName;
 
@@ -37,12 +42,18 @@ public class MinioService {
     @Value("${minio.public.url:#{null}}")
     private String publicUrl;
 
+    private static final long SCANNED_DOCUMENT_MAX_SIZE = 1024 * 1024; // 1MB
+    private static final long PARTNER_LOGO_MAX_SIZE = 1024 * 1024; // 1MB
+    private static final double MINIMUM_CONFIDENCE_THRESHOLD = 60.0;
+
     public MinioService(
             MinioClient minioClient,
-            @Qualifier("presignedMinioClient") MinioClient presignedMinioClient
+            @Qualifier("presignedMinioClient") MinioClient presignedMinioClient,
+            OcrService ocrService
     ) {
         this.minioClient = minioClient;
         this.presignedMinioClient = presignedMinioClient;
+        this.ocrService = ocrService;
     }
 
     public String uploadPartnerLogo(MultipartFile file) throws Exception {
@@ -51,8 +62,7 @@ public class MinioService {
             throw new IllegalArgumentException("File is empty");
         }
 
-        long maxSize = 10 * 1024 * 1024;
-        if (file.getSize() > maxSize) {
+        if (file.getSize() > PARTNER_LOGO_MAX_SIZE) {
             throw new IllegalArgumentException("File too large");
         }
 
@@ -81,6 +91,70 @@ public class MinioService {
 
         return objectKey;
     }
+
+    public ScannedDocumentUploadResult uploadScannedDocument(MultipartFile file, String submissionId) throws Exception {
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        if (!MediaType.APPLICATION_PDF_VALUE.equals(file.getContentType())) {
+            throw new IllegalArgumentException(
+                    "Invalid file type. Expected PDF, got: " + file.getContentType()
+            );
+        }
+
+        if (file.getSize() > SCANNED_DOCUMENT_MAX_SIZE) {
+            throw new IllegalArgumentException(
+                    "File too large. Maximum size is 1MB, got: "
+                            + String.format("%.2f MB", file.getSize() / (1024.0 * 1024.0))
+            );
+        }
+
+        byte[] pdfBytes = file.getBytes();
+
+        logger.info("Starting OCR validation for submission {}. File size: {} bytes",
+                submissionId, pdfBytes.length);
+
+        OcrResult ocrResult = ocrService.processDocument(pdfBytes);
+
+        if (ocrResult.getAverageConfidence() < MINIMUM_CONFIDENCE_THRESHOLD) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Document scan quality is too low. Confidence: %.1f%% (minimum: %.1f%%). "
+                                    + "Please re-scan with better clarity.",
+                            ocrResult.getAverageConfidence(),
+                            MINIMUM_CONFIDENCE_THRESHOLD
+                    )
+            );
+        }
+
+        if (!ocrResult.isTemplateMatched()) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Document does not match the expected MoA/IA template. "
+                                    + "Please upload the correct document."
+                    )
+            );
+        }
+        String objectKey = "scanned-documents/" + submissionId + "/" + UUID.randomUUID() + ".pdf";
+
+        minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectKey)
+                        .stream(new ByteArrayInputStream(pdfBytes), pdfBytes.length, -1)
+                        .contentType(MediaType.APPLICATION_PDF_VALUE)
+                        .build()
+        );
+
+        logger.info("Uploaded scanned document to MinIO: {} (confidence: {:.1f}%, anchors: {}/8)",
+                objectKey, ocrResult.getAverageConfidence(), ocrResult.getAnchorMatchCount());
+
+        return new ScannedDocumentUploadResult(objectKey, ocrResult);
+    }
+
+    public record ScannedDocumentUploadResult(String objectKey, OcrResult ocrResult) {}
 
 //    public presigned URL - for browser
     public String getPresignedUrl(String objectKey) throws Exception {

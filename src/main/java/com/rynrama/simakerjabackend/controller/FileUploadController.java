@@ -2,6 +2,7 @@ package com.rynrama.simakerjabackend.controller;
 
 import com.rynrama.simakerjabackend.dto.FileUploadResponse;
 import com.rynrama.simakerjabackend.dto.GetPresignedUrlRequest;
+import com.rynrama.simakerjabackend.dto.OcrResult;
 import com.rynrama.simakerjabackend.service.MinioService;
 import com.rynrama.simakerjabackend.util.GlobalAPIResponse;
 import jakarta.validation.Valid;
@@ -53,7 +54,7 @@ public class FileUploadController {
     }
 
     @PostMapping("/partner-logo/get-url")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
     public ResponseEntity<GlobalAPIResponse<String>> getPresignedUrl(
             @Valid @RequestBody GetPresignedUrlRequest request
     ) throws Exception {
@@ -63,5 +64,32 @@ public class FileUploadController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(GlobalAPIResponse.success(presignedUrl));
+    }
+
+    @PostMapping(value = "/scanned-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('STUDENT', 'LECTURER', 'STAFF')")
+    public ResponseEntity<GlobalAPIResponse<FileUploadResponse>> uploadScannedDocument(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "submission_id")  String submissionId
+    ) {
+        try {
+            var result = minioService.uploadScannedDocument(file, submissionId);
+
+            String previewUrl = minioService.getPresignedUrl(result.objectKey());
+
+            FileUploadResponse fileUploadResponse = new FileUploadResponse(result.objectKey(), previewUrl, result.ocrResult().getAverageConfidence());
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(GlobalAPIResponse.success(fileUploadResponse, "file upload success"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(GlobalAPIResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(GlobalAPIResponse.error(e.getMessage()));
+        }
     }
 }

@@ -172,6 +172,11 @@ public class StaffService {
                 false
         );
 
+        if (submission.getStatus() == SubmissionStatus.completed) return new ProcessableCheckResponse(
+                "submission already completed",
+                false
+        );
+
         if (submission.getLecturer() == null && submission.getLecturerVerifiedAt() == null) return new ProcessableCheckResponse(
                 "submission must be verified by adhoc first",
                 false

@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -66,6 +67,15 @@ public class MoaIADocumentModel {
     @Column(name = "partner_cooperation_period", nullable = false)
     private Integer partnerCooperationPeriod = 1;
 
+    @Column(name = "scanned_document_key")
+    private String scannedDocumentKey;
+
+    @Column(name = "send_scanned_at")
+    private Instant sendScannedAt;
+
+    @Column(name = "scanned_ocr_confident_score")
+    private Double scannedDocumentOcrConfidentScore = 0.0;
+
     public MoaIADocumentModel() {
     }
 
@@ -81,7 +91,10 @@ public class MoaIADocumentModel {
             List<StudentSnapshotModel> studentSnapshots,
             String partnerLogoKey,
             String partnerAddress,
-            Integer  partnerCooperationPeriod
+            Integer  partnerCooperationPeriod,
+            String scannedDocumentKey,
+            Instant sendScannedAt,
+            Double scannedDocumentOcrConfidentScore
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -95,6 +108,9 @@ public class MoaIADocumentModel {
         this.partnerLogoKey = partnerLogoKey;
         this.partnerAddress = partnerAddress;
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+        this.scannedDocumentKey = scannedDocumentKey;
+        this.sendScannedAt = sendScannedAt;
+        this.scannedDocumentOcrConfidentScore = scannedDocumentOcrConfidentScore;
     }
 
     public UUID getId() {
@@ -211,5 +227,29 @@ public class MoaIADocumentModel {
 
     public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+    }
+
+    public String getScannedDocumentKey() {
+        return scannedDocumentKey;
+    }
+
+    public void setScannedDocumentKey(String scannedDocumentKey) {
+        this.scannedDocumentKey = scannedDocumentKey;
+    }
+
+    public Instant getSendScannedAt() {
+        return sendScannedAt;
+    }
+
+    public void setSendScannedAt(Instant sendScannedAt) {
+        this.sendScannedAt = sendScannedAt;
+    }
+
+    public Double getScannedDocumentOcrConfidentScore() {
+        return scannedDocumentOcrConfidentScore;
+    }
+
+    public void setScannedDocumentOcrConfidentScore(Double scannedDocumentOcrConfidentScore) {
+        this.scannedDocumentOcrConfidentScore = scannedDocumentOcrConfidentScore;
     }
 }

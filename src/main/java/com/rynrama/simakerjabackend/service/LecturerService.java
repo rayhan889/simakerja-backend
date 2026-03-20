@@ -34,6 +34,7 @@ public class LecturerService {
             UUID lecturerUserId
     ) throws BadRequestException {
         log.info("Verifying submission={} by adhoc", submissionId);
+        log.info("Request submission status={}", request.getSubmissionStatus());
 
         var submission = getSubmission(submissionId);
 
@@ -71,6 +72,12 @@ public class LecturerService {
 
                 log.info("Submission={} has been rejected", submissionId);
             }
+            case SubmissionStatus.completed -> {
+                submission.setStatus(SubmissionStatus.completed);
+                submission.setNotes("");
+
+                log.info("Submission={} has been completed", submissionId);
+            }
         }
 
         return submission;
@@ -106,8 +113,12 @@ public class LecturerService {
                 false
         );
 
-        if (request.getSubmissionStatus() != SubmissionStatus.verified_adhoc && request.getSubmissionStatus() != SubmissionStatus.rejected_adhoc) return new ProcessableCheckResponse(
-                "submission status can only be either verified adhoc or rejected by adhoc",
+        if (
+                request.getSubmissionStatus() != SubmissionStatus.verified_adhoc &&
+                request.getSubmissionStatus() != SubmissionStatus.rejected_adhoc &&
+                request.getSubmissionStatus() != SubmissionStatus.completed
+        ) return new ProcessableCheckResponse(
+                "submission status can only be either verified adhoc, rejected by adhoc or completed",
                 false
         );
 
@@ -117,13 +128,10 @@ public class LecturerService {
                     false
             );
 
-        if (submission.getLecturer() != null && submission.getLecturerVerifiedAt() != null) return new ProcessableCheckResponse(
-                "submission already verified by adhoc",
-                false
-        );
+        boolean completed = submission.getStatus() == SubmissionStatus.completed && (submission.getStaffVerifiedAt() != null && submission.getLecturerVerifiedAt() != null);
 
-        if (submission.getStaff() != null && submission.getStaffVerifiedAt() != null) return new ProcessableCheckResponse(
-                "submission already verified by staff",
+        if (completed) return  new ProcessableCheckResponse(
+                "submission already completed",
                 false
         );
 
