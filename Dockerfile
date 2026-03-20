@@ -20,7 +20,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
         tesseract-ocr \
-        tesseract-ocr-ind && \
+        tesseract-ocr-ind \
+        libtesseract-dev \
+        libleptonica-dev \
+        libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV TESSDATA_PATH=/usr/share/tesseract-ocr/5/tessdata

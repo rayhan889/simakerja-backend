@@ -82,8 +82,10 @@ public class OcrService {
             test.setDatapath(tessdataPath);
             test.setLanguage("ind");
             logger.info("Tesseract native library loaded successfully");
-        } catch (Exception e) {
-            logger.error("Failed to initialize Tesseract: {}", e.getMessage(), e);
+        } catch (Throwable t) {
+            logger.error("CRITICAL: Failed to initialize Tesseract native libraries. " +
+                    "Ensure libleptonica-dev and libtesseract-dev are installed. " +
+                    "Error: {}", t.getMessage(), t);
         }
     }
 
