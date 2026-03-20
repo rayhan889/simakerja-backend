@@ -26,6 +26,8 @@ RUN apt-get update && \
         libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
+ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/lib
+
 ENV TESSDATA_PATH=/usr/share/tesseract-ocr/5/tessdata
 
 RUN echo "=== Tessdata verification ===" && \
