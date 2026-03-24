@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,7 +54,8 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
         m.activityType,
         s.submissionDate,
         s.notes,
-        m.documentType
+        m.documentType,
+        s.period
     )
     from SubmissionModel s
         left join MoaIADocumentModel m on s.id = m.submission.id
@@ -209,4 +211,12 @@ public interface SubmissionRepository extends JpaRepository<SubmissionModel, UUI
             DocumentActivityType activityType,
             String studyProgram
     );
+
+    @Query("""
+    select case when count(s) > 0 then true else false end
+        from SubmissionModel s
+            where s.period between :start and :end
+                and s.user.id = :userId
+    """)
+    boolean isSubmissionOnHalfOfYearAlreadyExits(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("userId") UUID userId);
 }

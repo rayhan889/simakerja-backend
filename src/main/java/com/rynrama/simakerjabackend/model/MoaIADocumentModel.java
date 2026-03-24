@@ -12,7 +12,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "moa_ia_documents")
+@Table(
+        name = "moa_ia_documents",
+        indexes = {
+                @Index(name = "idx_moa_ia_partner_name_trgm", columnList = "partner_name_normalized"),
+                @Index(name = "idx_moa_ia_partner_acronym", columnList = "partner_name_acronym")
+        }
+)
 public class MoaIADocumentModel {
 
     @Id
@@ -76,6 +82,15 @@ public class MoaIADocumentModel {
     @Column(name = "scanned_ocr_confident_score")
     private Double scannedDocumentOcrConfidentScore = 0.0;
 
+    @Column(name = "partner_name_normalized")
+    private String partnerNameNormalized;
+
+    @Column(name = "partner_name_acronym")
+    private String partnerNameAcronym;
+
+    @Column(name = "mode")
+    private MoaIASubmissionMode mode = MoaIASubmissionMode.existing_partner;
+
     public MoaIADocumentModel() {
     }
 
@@ -94,7 +109,10 @@ public class MoaIADocumentModel {
             Integer  partnerCooperationPeriod,
             String scannedDocumentKey,
             Instant sendScannedAt,
-            Double scannedDocumentOcrConfidentScore
+            Double scannedDocumentOcrConfidentScore,
+            String partnerNameNormalized,
+            String partnerNameAcronym,
+            MoaIASubmissionMode mode
     ) {
         this.id = id;
         this.documentType = documentType;
@@ -111,6 +129,9 @@ public class MoaIADocumentModel {
         this.scannedDocumentKey = scannedDocumentKey;
         this.sendScannedAt = sendScannedAt;
         this.scannedDocumentOcrConfidentScore = scannedDocumentOcrConfidentScore;
+        this.partnerNameNormalized = partnerNameNormalized;
+        this.partnerNameAcronym = partnerNameAcronym;
+        this.mode = mode;
     }
 
     public UUID getId() {
@@ -251,5 +272,29 @@ public class MoaIADocumentModel {
 
     public void setScannedDocumentOcrConfidentScore(Double scannedDocumentOcrConfidentScore) {
         this.scannedDocumentOcrConfidentScore = scannedDocumentOcrConfidentScore;
+    }
+
+    public String getPartnerNameNormalized() {
+        return partnerNameNormalized;
+    }
+
+    public void setPartnerNameNormalized(String partnerNameNormalized) {
+        this.partnerNameNormalized = partnerNameNormalized;
+    }
+
+    public String getPartnerNameAcronym() {
+        return partnerNameAcronym;
+    }
+
+    public void setPartnerNameAcronym(String partnerNameAcronym) {
+        this.partnerNameAcronym = partnerNameAcronym;
+    }
+
+    public MoaIASubmissionMode getMode() {
+        return mode;
+    }
+
+    public void setMode(MoaIASubmissionMode mode) {
+        this.mode = mode;
     }
 }

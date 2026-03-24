@@ -110,7 +110,7 @@ public class DocumentSubmissionController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<GlobalAPIResponse<SubmissionModel>> submitDocument(
         @Valid @RequestBody DocumentSubmissionRequest request
-    ) throws Exception {
+    ) {
         String userId = (String) Objects.requireNonNull(SecurityContextHolder.getContext()
                 .getAuthentication()).getPrincipal();
 
