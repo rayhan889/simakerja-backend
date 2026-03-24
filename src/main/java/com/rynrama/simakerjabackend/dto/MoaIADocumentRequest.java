@@ -2,6 +2,7 @@ package com.rynrama.simakerjabackend.dto;
 
 import com.rynrama.simakerjabackend.model.DocumentActivityType;
 import com.rynrama.simakerjabackend.model.MoAIADocumentType;
+import com.rynrama.simakerjabackend.model.MoaIASubmissionMode;
 import com.rynrama.simakerjabackend.model.StudentSnapshot;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -58,6 +59,9 @@ public class MoaIADocumentRequest {
     @Max(7)
     private Integer partnerCooperationPeriod;
 
+    @NotNull
+    private MoaIASubmissionMode mode;
+
     public MoaIADocumentRequest(
             MoAIADocumentType documentType,
             String partnerName,
@@ -69,7 +73,8 @@ public class MoaIADocumentRequest {
             List<StudentSnapshot> studentSnapshots,
             String partnerAddress,
             String partnerLogoKey,
-            Integer partnerCooperationPeriod
+            Integer partnerCooperationPeriod,
+            MoaIASubmissionMode mode
     ) {
         this.documentType = documentType;
         this.partnerName = partnerName;
@@ -82,6 +87,7 @@ public class MoaIADocumentRequest {
         this.partnerAddress = partnerAddress;
         this.partnerLogoKey = partnerLogoKey;
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+        this.mode = mode;
     }
 
     public MoAIADocumentType getDocumentType() {
@@ -170,5 +176,13 @@ public class MoaIADocumentRequest {
 
     public void setPartnerCooperationPeriod(Integer partnerCooperationPeriod) {
         this.partnerCooperationPeriod = partnerCooperationPeriod;
+    }
+
+    public MoaIASubmissionMode getMode() {
+        return mode;
+    }
+
+    public void setMode(MoaIASubmissionMode mode) {
+        this.mode = mode;
     }
 }
