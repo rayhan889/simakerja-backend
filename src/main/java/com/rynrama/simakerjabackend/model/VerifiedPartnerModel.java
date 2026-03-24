@@ -18,7 +18,9 @@ import java.util.UUID;
 @Table(
         name = "verified_partners",
         indexes = {
-                @Index(name = "idx_verified_partners_partner_number", columnList = "partner_number")
+                @Index(name = "idx_verified_partners_partner_number", columnList = "partner_number"),
+                @Index(name = "idx_verified_partner_name_trgm", columnList = "partner_name_normalized"),
+                @Index(name = "idx_verified_partner_acronym", columnList = "partner_name_acronym")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_verified_partners_moa_ia", columnNames = "moa_ia_id"),
@@ -77,4 +79,10 @@ public class VerifiedPartnerModel {
 
     @Column(name = "verified_until", nullable = false, updatable = false)
     private Instant verifiedUntil;
+
+    @Column(name = "partner_name_normalized")
+    private String partnerNameNormalized;
+
+    @Column(name = "partner_name_acronym")
+    private String partnerNameAcronym;
 }

@@ -7,6 +7,7 @@ import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
@@ -22,6 +23,7 @@ public class StudentSubmissionPaginationDTO {
     private Instant submissionDate;
     private String notes;
     private MoAIADocumentType documentType;
+    private LocalDate period;
 
     public StudentSubmissionPaginationDTO(
             UUID applicantId,
@@ -34,7 +36,8 @@ public class StudentSubmissionPaginationDTO {
             DocumentActivityType activityType,
             Instant submissionDate,
             String notes,
-            MoAIADocumentType documentType
+            MoAIADocumentType documentType,
+            LocalDate period
     ) {
         this.applicantId = applicantId;
         this.applicantName = applicantName;
@@ -47,6 +50,7 @@ public class StudentSubmissionPaginationDTO {
         this.submissionDate = submissionDate;
         this.notes = notes;
         this.documentType = documentType;
+        this.period = period;
     }
 
     public StudentSubmissionPaginationDTO() {
@@ -138,5 +142,13 @@ public class StudentSubmissionPaginationDTO {
 
     public void setApplicantNim(String applicantNim) {
         this.applicantNim = applicantNim;
+    }
+
+    public LocalDate getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(LocalDate period) {
+        this.period = period;
     }
 }

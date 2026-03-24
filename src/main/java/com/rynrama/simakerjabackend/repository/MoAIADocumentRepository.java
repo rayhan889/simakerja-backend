@@ -96,4 +96,29 @@ public interface MoAIADocumentRepository extends JpaRepository<MoaIADocumentMode
                 where s.id = :submissionId
 """)
     Optional<MoaIADocumentModel>    findBySubmissionId(String submissionId);
+
+//    @Query(value = """
+//        SELECT m.partner_name, m.partner_name_normalized, m.partner_name_acronym,
+//               similarity(m.partner_name_normalized, :normalizedName) AS sim_score
+//        FROM moa_ia_documents m
+//        WHERE m.partner_name_normalized = :normalizedName
+//           OR (:isAcronymInput = true AND m.partner_name_acronym = :normalizedName)
+//           OR (m.partner_name_normalized = :acronym)
+//           OR similarity(m.partner_name_normalized, :normalizedName) > :threshold
+//        ORDER BY sim_score DESC
+//        LIMIT 5
+//        """, nativeQuery = true)
+//    List<Object[]> findPotentialDuplicatesByName(
+//            @Param("normalizedName") String normalizedName,
+//            @Param("acronym") String acronym,
+//            @Param("isAcronymInput") boolean isAcronymInput,
+//            @Param("threshold") double threshold
+//    );
+//    @Query(value = """
+//        SELECT m.partner_name
+//        FROM moa_ia_documents m
+//        WHERE m.partner_number = :partnerNumber
+//        LIMIT 1
+//        """, nativeQuery = true)
+//    List<Object[]> findPotentialDuplicatesByNumber(@Param("partnerNumber") String partnerNumber);
 }

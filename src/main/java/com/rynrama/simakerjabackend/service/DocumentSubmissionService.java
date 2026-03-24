@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
 @Service
@@ -35,6 +37,7 @@ public class DocumentSubmissionService {
     private final MoAIADocumentMapper moAIADocumentMapper;
     private final VerifiedPartnerRepository verifiedPartnerRepository;
     private final LecturerRepository lecturerRepository;
+    private final PartnerDuplicateChecker partnerDuplicateChecker;
 
     public DocumentSubmissionService(
             SubmissionRepository submissionRepository,
@@ -45,7 +48,8 @@ public class DocumentSubmissionService {
             StudentRepository studentRepository,
             MoAIADocumentMapper moAIADocumentMapper,
             VerifiedPartnerRepository verifiedPartnerRepository,
-            LecturerRepository lecturerRepository
+            LecturerRepository lecturerRepository,
+            PartnerDuplicateChecker partnerDuplicateChecker
     ) {
         this.submissionRepository = submissionRepository;
         this.moAIADocumentRepository = moAIADocumentRepository;
@@ -56,6 +60,7 @@ public class DocumentSubmissionService {
         this.moAIADocumentMapper = moAIADocumentMapper;
         this.verifiedPartnerRepository = verifiedPartnerRepository;
         this.lecturerRepository = lecturerRepository;
+        this.partnerDuplicateChecker = partnerDuplicateChecker;
     }
 
     public DocumentActivityType toValidDocumentActivityType(String value) {
@@ -161,7 +166,7 @@ public class DocumentSubmissionService {
             SubmissionModel submission,
             UUID userId,
             MoaIADocumentRequest moaIADocumentRequest
-    ) throws Exception {
+    ) {
         log.info("Saving document. userId={}", userId);
 
         NumericRandomGenerator numericRandomGenerator = new NumericRandomGenerator();
@@ -185,8 +190,41 @@ public class DocumentSubmissionService {
         var submissionDate = Instant.now();
         submission.setSubmissionDate(submissionDate);
 
-        var period = YearMonth.from(submissionDate.atZone(ZoneId.of("UTC")));
-        submission.setPeriod(period.atDay(1));
+        LocalDate period = LocalDate.ofInstant(submissionDate, ZoneId.systemDefault());
+        submission.setPeriod(period.withDayOfMonth(1));
+
+//        Period check. Prevent submission on the same period of the year. 2 periods on a year
+        int month = period.getMonthValue();
+        LocalDate start = period.withMonth(month <= 6 ? 1 : 7);
+        LocalDate end = period.withMonth(month <= 6 ? 6 : 12).with(TemporalAdjusters.lastDayOfMonth());
+        if (submissionRepository.isSubmissionOnHalfOfYearAlreadyExits(start, end, userId)) {
+            log.error("Submission already existed for this period of year. Start={}, End={}", start, end);
+            throw new DuplicateResourceException(
+                    "Pengajuan untuk periode ini telah dibuat. Pastikan untuk mengecek progresnya."
+            );
+        }
+
+//        Duplication check. Only runs if it's in a new partner mode
+//        1. exact match check
+//        2. trigram similarity check
+//        3. acronym check -> BCA == Bank Central Asia Tbk, but not Bank Cengdu Aegoon
+        if (submission.getSubmissionType() == SubmissionType.moa_ia &&
+                (moaIADocumentRequest != null && moaIADocumentRequest.getMode() == MoaIASubmissionMode.new_partner)) {
+            DuplicateCheckResult check = partnerDuplicateChecker.checkPotentialDuplication(
+                    moaIADocumentRequest.getPartnerName(),
+                    moaIADocumentRequest.getPartnerNumber()
+            );
+
+            if (check.isBlocked()) {
+                log.error("Duplicate partner found. Matched existing partner: {}, with match type: {}", check.getMatchedPartnerName(), check.getMatchType());
+                throw new DuplicateResourceException(
+                        "Mitra '" + check.getMatchedPartnerName() + " sudah terdaftar. " +
+                                "Harap menggunakan mitra yang sudah ada atau ubah nama mitra."
+                );
+            } else if (check.isWarned()) {
+                log.warn("There's possibility of partner duplication. User input partner name: {}, and existing partner name: {}", moaIADocumentRequest.getPartnerName(), check.getMatchedPartnerName());
+            }
+        }
 
         submission.setCreatedAt(Instant.now());
         submission.setFacultyAddress(submission.getFacultyAddress());
@@ -195,7 +233,10 @@ public class DocumentSubmissionService {
 
         log.debug("Submission saved. submission type={}", submission.getSubmissionType());
         switch (submission.getSubmissionType()) {
-            case SubmissionType.moa_ia -> saveMoaIADocument(submission, moaIADocumentRequest);
+            case SubmissionType.moa_ia -> {
+                assert moaIADocumentRequest != null;
+                saveMoaIADocument(submission, moaIADocumentRequest);
+            }
             case SubmissionType.cooperation_request -> saveCooperationRequestDocument();
             case SubmissionType.mou_request -> saveMouRequestDocument();
             case SubmissionType.visit_request -> saveVisitRequestDocument();
@@ -234,6 +275,12 @@ public class DocumentSubmissionService {
         moaIADocument.setStudentSnapshots(snapshotEntities);
         moaIADocument.setPartnerAddress(moaIADocumentRequest.getPartnerAddress());
         moaIADocument.setPartnerLogoKey(moaIADocumentRequest.getPartnerLogoKey());
+
+        String rawName = moaIADocumentRequest.getPartnerName();
+        String normalizedName = PartnerNameNormalizer.normalize(rawName);
+
+        moaIADocument.setPartnerNameNormalized(normalizedName);
+        moaIADocument.setPartnerNameAcronym(PartnerNameNormalizer.acronym(normalizedName));
 
         moAIADocumentRepository.save(moaIADocument);
     }

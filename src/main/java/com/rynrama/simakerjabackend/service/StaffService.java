@@ -8,6 +8,7 @@ import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
 import com.rynrama.simakerjabackend.repository.StaffRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
 import com.rynrama.simakerjabackend.repository.VerifiedPartnerRepository;
+import com.rynrama.simakerjabackend.util.PartnerNameNormalizer;
 import jakarta.persistence.PessimisticLockException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -140,6 +141,12 @@ public class StaffService {
                 .plusYears(moaIa.getPartnerCooperationPeriod())
                 .toInstant();
         verifiedPartner.setVerifiedUntil(verifiedUntil);
+
+        String rawName = moaIa.getPartnerName();
+        String normalizedName = PartnerNameNormalizer.normalize(rawName);
+
+        verifiedPartner.setPartnerNameNormalized(normalizedName);
+        verifiedPartner.setPartnerNameAcronym(PartnerNameNormalizer.acronym(normalizedName));
 
         log.info("Successfully creating new verified partner");
         verifiedPartnerRepo.save(verifiedPartner);

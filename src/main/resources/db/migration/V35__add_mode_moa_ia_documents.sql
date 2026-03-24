@@ -1,0 +1,2 @@
+ALTER TABLE moa_ia_documents
+    ADD COLUMN IF NOT EXISTS mode SMALLINT;
