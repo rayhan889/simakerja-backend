@@ -103,6 +103,9 @@ jobs:
       VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Deploy application
         run: |
           cd $VPS_DEPLOY_PATH
