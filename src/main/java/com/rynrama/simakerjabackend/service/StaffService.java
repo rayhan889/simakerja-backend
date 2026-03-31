@@ -4,10 +4,8 @@ import com.rynrama.simakerjabackend.dto.StaffVerifySubmissionRequest;
 import com.rynrama.simakerjabackend.dto.UpdateSubmissionRequest;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.model.*;
-import com.rynrama.simakerjabackend.repository.MoAIADocumentRepository;
-import com.rynrama.simakerjabackend.repository.StaffRepository;
-import com.rynrama.simakerjabackend.repository.SubmissionRepository;
-import com.rynrama.simakerjabackend.repository.VerifiedPartnerRepository;
+import com.rynrama.simakerjabackend.repository.*;
+import com.rynrama.simakerjabackend.util.FormatString;
 import com.rynrama.simakerjabackend.util.PartnerNameNormalizer;
 import jakarta.persistence.PessimisticLockException;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,17 +29,23 @@ public class StaffService {
     private final SubmissionRepository  submissionRepo;
     private final VerifiedPartnerRepository verifiedPartnerRepo;
     private final MoAIADocumentRepository moAIADocumentRepo;
+    private final EmailService emailService;
+    private final StudentRepository studentRepo;
 
     public StaffService(
             StaffRepository staffRepo,
             SubmissionRepository submissionRepo,
             VerifiedPartnerRepository verifiedPartnerRepo,
-            MoAIADocumentRepository moAIADocumentRepo
+            MoAIADocumentRepository moAIADocumentRepo,
+            EmailService emailService,
+            StudentRepository studentRepo
     ) {
         this.staffRepo = staffRepo;
         this.submissionRepo = submissionRepo;
         this.verifiedPartnerRepo = verifiedPartnerRepo;
         this.moAIADocumentRepo = moAIADocumentRepo;
+        this.emailService = emailService;
+        this.studentRepo = studentRepo;
     }
 
     @Transactional
@@ -102,6 +109,28 @@ public class StaffService {
                 submission.setStaffVerifiedAt(now);
                 submission.setNotes("");
 
+                String userEmail = submission.getUser().getEmail();
+
+                EmailDetails details = new EmailDetails();
+                details.setSubject("Pengajuan MoA & IA Anda Telah Terverifikasi.");
+                details.setRecipient(userEmail);
+
+                StudentModel student = studentRepo
+                        .findByUserId(submission.getUser().getId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Student is not found"
+                                )
+                        );
+
+                var htmlVariables = buildVerifiedStaffHtmlVariables(student);
+
+                emailService.sendHtmlMail(
+                        details,
+                        "verified_staff_email_template",
+                        htmlVariables
+                );
+
                 log.info("Submission={} has been verified", submissionId);
             }
             case SubmissionStatus.rejected_staff -> {
@@ -117,6 +146,16 @@ public class StaffService {
         }
 
         return submission;
+    }
+
+    private Map<String, Object> buildVerifiedStaffHtmlVariables(StudentModel student) {
+        Map<String, Object> dataMap = new HashMap<>();
+
+        dataMap.put("name", FormatString.formatFullname(student.getUser().getFullName()));
+        dataMap.put("nim", student.getNim());
+        dataMap.put("studyProgram", FormatString.formatProgramStudy(student.getStudyProgram()));
+
+        return dataMap;
     }
 
     private void createVerifiedPartner(MoaIADocumentModel moaIa) {

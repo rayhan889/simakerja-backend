@@ -25,25 +25,30 @@ public class FormatString {
             return input;
         }
 
-        String result = input.replaceFirst("^\\d+_", "");
+        // 1. Remove numbers and characters (like '_') before the first letter
+        // Regex explanation: ^ (start of string) [^a-zA-Z]+ (one or more characters that are NOT letters)
+        String cleaned = input.replaceFirst("^[^a-zA-Z]+", "");
 
-        result = result.replaceFirst("\\s+(TI|SI|PTI)\\b.*", "");
+        // 2. Remove the specific suffixes at the end (e.g., TIC23, SI..., PTI...)
+        // Regex explanation: \s+ (spaces) followed by TI, SI, or PTI, then any characters .* to the end $
+        cleaned = cleaned.replaceFirst("\\s+(TI|SI|PTI).*$", "");
 
-        result = result.replaceAll("[^A-Za-z\\s]", "");
+        // 3. Capitalize each word and return
+        return toTitleCase(cleaned.trim());
+    }
 
-        result = result.trim().replaceAll("\\s+", " ");
+    private static String toTitleCase(String text) {
+        String[] words = text.split("\\s+");
+        StringBuilder titleCase = new StringBuilder();
 
-        String[] parts = result.toLowerCase().split(" ");
-        StringBuilder builder = new StringBuilder();
-
-        for (String part : parts) {
-            if (!part.isEmpty()) {
-                builder.append(Character.toUpperCase(part.charAt(0)))
-                        .append(part.substring(1))
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                titleCase.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1).toLowerCase())
                         .append(" ");
             }
         }
 
-        return builder.toString().trim();
+        return titleCase.toString().trim();
     }
 }

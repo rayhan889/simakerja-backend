@@ -13,7 +13,7 @@
         body {
             font-family: 'Book Antiqua', serif;
             font-size: 12pt;
-            line-height: 1.5;
+            line-height: 1.15;
             color: #000000;
             margin: 0;
             padding: 0;
@@ -78,11 +78,11 @@
             margin: 20px 0;
             font-weight: 600;
             text-align: center;
-            padding-left: 5rem;
         }
 
-        .document-number div {
-            text-align: left;
+        .document-number table tr {
+            text-align: center;
+            padding-left: 10rem;
             display: inline-block;
             min-width: 300px;
         }
@@ -199,9 +199,8 @@
         }
 
         .appendix-title {
-            text-align: center;
-            font-weight: 600;
-            font-style: italic; /* Match "Lampiran" style from reference */
+            text-align: left;
+            font-weight: 400;
             margin-bottom: 10px;
         }
 
@@ -222,7 +221,7 @@
 
         .data-table th {
             background-color: #ffffff; /* White background for cleaner look */
-            font-weight: 600;
+            font-weight: 400;
             text-align: center;
             vertical-align: middle;
         }
@@ -283,6 +282,21 @@
         .paragprah-spacing-1x{
             line-height: 20px;
         }
+
+        .alphabet-list {
+            list-style-type: lower-alpha !important; /* Forces a, b, c */
+            counter-reset: none; /* Prevents it from triggering the main list counter */
+            margin-top: 5px;
+        }
+
+        .alphabet-list li {
+            display: list-item;
+            list-style-position: outside;
+        }
+
+        .alphabet-list li::before {
+            content: none !important;
+        }
     </style>
 </head>
 <body>
@@ -313,8 +327,18 @@
 
 <!-- Document Numbers -->
 <div class="document-number">
-    <div>Nomor: <span th:text="${facultyNumber}"></span></div>
-    <div>Nomor: <span th:text="${partnerNumber}">PARTNER NUMBER</span></div>
+    <table>
+        <tr>
+            <td>Nomor</td>
+            <td>    :</td>
+            <td><span th:text="${facultyNumber}"></span></td>
+        </tr>
+        <tr>
+            <td>Nomor</td>
+            <td>    :</td>
+            <td><span th:text="${partnerNumber}"></span></td>
+        </tr>
+    </table>
 </div>
 
 <!-- Opening Statement -->
@@ -322,7 +346,7 @@
     <p class="paragprah-spacing-1x">
         Pada hari <b th:text="${day}">hari</b>, tanggal <b th:text="${date}">tanggal</b>,
         bulan <b th:text="${month}">bulan</b>, tahun <b th:text="${yearInLongText}">dua ribu dua puluh enam</b>
-        <b th:text="${ddMMYYYYFormatDate}">dd-MM-YYYY</b>, yang bertanda tangan di bawah ini:
+        (<b th:text="${ddMMYYYYFormatDate}">dd-MM-YYYY</b>), yang bertanda tangan di bawah ini:
     </p>
 </div>
 
@@ -387,6 +411,9 @@
     </div>
 </div>
 
+<br/>
+<br/>
+
 <!-- PASAL 1 -->
 <div class="article">
     <p class="article-title">PASAL 1<br/>KETENTUAN UMUM</p>
@@ -424,7 +451,12 @@
             <li class="paragprah-spacing-1x">
                 Kegiatan ini dilakukan oleh Fakultas <span th:text="${faculty}">Faculty</span> di
                 <span th:text="${partnerName}">Partner Name</span> sesuai dengan visi dan misi kedua belah pihak,
-                adapun berikut rincian kegiatan:
+                adapun berikut rincian kegiatan: <br/>
+
+                <span>a) Kegiatan Utama (Observasi dan Praktik).</span> <br/>
+                <span>b) Tanggung Jawab Para Pihak (Universitas dan Mitra).</span> <br/>
+                <span>c) Teknis Pelaksanaan</span> <br/>
+                <span>d) Aspek Administrasi dalam MoA/IA</span>
             </li>
             <li class="paragprah-spacing-1x">
                 Program studi yang mahasiswanya melaksanakan kegiatan Mobilitas Akademik sebagaimana pada
@@ -483,7 +515,7 @@
 
 <!-- PASAL 8 -->
 <div class="article">
-    <p class="article-title">PASAL 8<br/>ADDENDUM</p>
+    <p class="article-title">PASAL 8<br/><i>ADDENDUM</i></p>
     <div class="article-content">
         <ol class="numbered-list">
             <li class="paragprah-spacing-1x">
@@ -494,7 +526,7 @@
             <li class="paragprah-spacing-1x">
                 <strong>PARA PIHAK</strong> bersepakat bahwa beberapa syarat atau ketentuan yang belum
                 tercantum dalam perjanjian kerja sama ini akan diatur dan dicantumkan dalam suplemen atau
-                addendum yang merupakan bagian tak terpisahkan dalam perjanjian ini, dan ditandatangani
+                <i>addendum</i> yang merupakan bagian tak terpisahkan dalam perjanjian ini, dan ditandatangani
                 oleh <strong>PARA PIHAK</strong> diatas kertas bermeterai cukup.
             </li>
         </ol>
@@ -525,6 +557,7 @@
                 <div>Universitas Negeri Surabaya</div>
                 <div class="signature-box"></div>
                 <p class="name" th:text="${facultyRepresentativeName}">Faculty Representative Name</p>
+                <p class="name">NIP. 196906021994031001</p>
             </td>
             <td>
                 <div><strong>PIHAK KEDUA</strong></div>
@@ -532,6 +565,7 @@
                 <div th:text="${partnerName}">Partner Name</div>
                 <div class="signature-box"></div>
                 <p class="name" th:text="${partnerRepresentativeName}">Partner Representative Name</p>
+                <p class="name">NIP.</p>
             </td>
         </tr>
     </table>
@@ -540,9 +574,26 @@
 <!-- Appendix / Lampiran -->
 <div class="appendix">
     <p class="appendix-title">Lampiran</p>
+    <table>
+        <tr>
+            <td>Nomor</td>
+            <td>    :</td>
+            <td><span th:text="${facultyNumber}"></span></td>
+        </tr>
+        <tr>
+            <td>Nomor</td>
+            <td>    :</td>
+            <td><span th:text="${partnerNumber}"></span></td>
+        </tr>
+        <tr>
+            <td>Tanggal</td>
+            <td>    :</td>
+            <td></td>
+        </tr>
+    </table>
     <p class="mb-20 text-bold paragprah-spacing-1x">
-        Tabel Rincian Program Studi dan Mahasiswa Fakultas <span th:text="${faculty}">Faculty</span>
-        Universitas Negeri Surabaya yang melakukan Program <span th:text="${activityType}">Activity Type</span>
+        Tabel Rincian Program Studi dan Mahasiswa Fakultas <span th:text="${faculty}">Faculty</span> Universitas Negeri
+        Surabaya yang melakukan Program <span th:text="${activityType}">Activity Type</span>
         di <span th:text="${partnerName}">Partner Name</span>
     </p>
 
@@ -566,6 +617,11 @@
         </tr>
         </tbody>
     </table>
+    <p class="mb-20 text-bold paragprah-spacing-1x">
+        Keterangan: Dokumen ini diajukan bersama-sama untuk semua mahasiswa FT
+        yang sedang magang di <span th:text="${partnerName}">Partner Name</span>. Daftarkan nama mahasiswa dan prodi
+        masing masing pada tabel lampiran.
+    </p>
 </div>
 </body>
 </html>

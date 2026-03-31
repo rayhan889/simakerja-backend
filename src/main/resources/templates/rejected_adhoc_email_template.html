@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; font-size: 14px; color: #202124; line-height: 1.5; margin: 0; padding: 0;">
+
+<div style="padding: 20px;">
+    <p style="margin-top: 0;">Halo, Kak <span th:text="${name}">User</span></p>
+
+    <p>Pengajuan Dokumen MoA & IA<br>
+        a.n<br>
+        <strong>Nama :</strong> <span th:text="${name}">User</span><br>
+        <strong>NIM :</strong> <span th:text="${nim}">239012930192</span><br>
+        <strong>Prodi :</strong> <span th:text="${studyProgram}">User</span><br>
+        <strong>Status Surat :</strong> Ditolak Adhoc</p>
+        <strong>Alasan/Keterangan :</strong> "<p th:text="${reason}">Reason</p>"</p>
+
+    <p>*Dokumen yang ditolak oleh adhoc dapat <strong>segera dikoreksi dan diupdate</strong> agar sistem secara otomatis melakukan pengajuan ulang</p>
+
+    <p style="margin-bottom: 0;">Thank You,<br>
+        Fakultas Teknik UNESA</p>
+</div>
+
+</body>
+</html>
