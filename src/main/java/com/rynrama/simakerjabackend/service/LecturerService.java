@@ -2,11 +2,11 @@ package com.rynrama.simakerjabackend.service;
 
 import com.rynrama.simakerjabackend.dto.UpdateSubmissionRequest;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
-import com.rynrama.simakerjabackend.model.LecturerModel;
-import com.rynrama.simakerjabackend.model.SubmissionModel;
-import com.rynrama.simakerjabackend.model.SubmissionStatus;
+import com.rynrama.simakerjabackend.model.*;
 import com.rynrama.simakerjabackend.repository.LecturerRepository;
+import com.rynrama.simakerjabackend.repository.StudentRepository;
 import com.rynrama.simakerjabackend.repository.SubmissionRepository;
+import com.rynrama.simakerjabackend.util.FormatString;
 import jakarta.persistence.PessimisticLockException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -21,10 +23,19 @@ import java.util.UUID;
 public class LecturerService {
     private final LecturerRepository lecturerRepo;
     private final SubmissionRepository  submissionRepo;
+    private final EmailService emailService;
+    private final StudentRepository studentRepo;
 
-    public LecturerService(LecturerRepository lecturerRepo, SubmissionRepository submissionRepo) {
+    public LecturerService(
+            LecturerRepository lecturerRepo,
+            SubmissionRepository submissionRepo,
+            EmailService emailService,
+            StudentRepository studentRepo
+    ) {
         this.lecturerRepo = lecturerRepo;
         this.submissionRepo = submissionRepo;
+        this.emailService = emailService;
+        this.studentRepo = studentRepo;
     }
 
     @Transactional
@@ -70,6 +81,28 @@ public class LecturerService {
                 submission.setLecturerRejectedAt(now);
                 submission.setNotes(request.getNotes());
 
+                String userEmail = submission.getUser().getEmail();
+
+                EmailDetails details = new EmailDetails();
+                details.setSubject("Pengajuan MoA & IA Anda Ditolak.");
+                details.setRecipient(userEmail);
+
+                StudentModel student = studentRepo
+                        .findByUserId(submission.getUser().getId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Student is not found"
+                                )
+                        );
+
+                var htmlVariables = buildRejectedHtmlVariables(student, submission);
+
+                emailService.sendHtmlMail(
+                        details,
+                        "rejected_adhoc_email_template",
+                        htmlVariables
+                );
+
                 log.info("Submission={} has been rejected", submissionId);
             }
             case SubmissionStatus.completed -> {
@@ -81,6 +114,20 @@ public class LecturerService {
         }
 
         return submission;
+    }
+
+    private Map<String, Object> buildRejectedHtmlVariables(
+            StudentModel student,
+            SubmissionModel submission
+    ) {
+        Map<String, Object> dataMap = new HashMap<>();
+
+        dataMap.put("name", FormatString.formatFullname(student.getUser().getFullName()));
+        dataMap.put("nim", student.getNim());
+        dataMap.put("studyProgram", FormatString.formatProgramStudy(student.getStudyProgram()));
+        dataMap.put("reason", submission.getNotes());
+
+        return dataMap;
     }
 
     private SubmissionModel getSubmission(String submissionId) throws BadRequestException {
