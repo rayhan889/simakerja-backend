@@ -113,8 +113,15 @@ jobs:
           cd $VPS_DEPLOY_PATH
           echo 'Pulling latest image...'
           docker compose --env-file .env.prod -f docker-compose.prod.yml pull spring-api
-          echo 'Restarting spring-api service...'
-          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d spring-api
+
+          if docker compose --env-file .env.prod -f docker-compose.prod.yml up -d spring-api 2>&1 | grep -q "network"; then
+            echo 'Compose config changed, performing full restart...'
+            docker compose --env-file .env.prod -f docker-compose.prod.yml down
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+          else
+            echo 'Restarted spring-api service.'
+          fi
+
           echo 'Cleaning up old images...'
           docker image prune -f
           echo 'Deployment completed!'
