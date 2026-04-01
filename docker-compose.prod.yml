@@ -85,6 +85,8 @@ services:
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_SSL_ENABLED: ${EMAIL_SSL_ENABLED}
+      EMAIL_STARTTLS_ENABLED: ${EMAIL_STARTTLS_ENABLED}
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
       interval: 30s
