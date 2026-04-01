@@ -1,21 +1,23 @@
 package com.rynrama.simakerjabackend.service;
 
+import com.resend.Resend;
+import com.resend.services.emails.model.Attachment;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import com.rynrama.simakerjabackend.exception.ResourceNotFoundException;
 import com.rynrama.simakerjabackend.model.EmailDetails;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 
 @Service
@@ -23,122 +25,122 @@ import java.util.Map;
 public class EmailServiceImpl implements EmailService {
 
     @Autowired
-    private JavaMailSender javaMailSender;
+    private Resend resend;
 
     @Autowired
     private TemplateEngine templateEngine;
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.from.email:hello@simakerja.com}")
     private String sender;
 
+    @Override
     public void sendSimpleMail(EmailDetails details) {
-
         log.info("Sending simple email started. sender={}", sender);
 
         try {
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
-
-            mailMessage.setFrom(sender);
-            mailMessage.setTo(details.getRecipient());
-            mailMessage.setText(details.getMsgBody());
-            mailMessage.setSubject(details.getSubject());
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(sender)
+                    .to(details.getRecipient())
+                    .subject(details.getSubject())
+                    .text(details.getMsgBody())
+                    .build();
 
             log.info("recipient={}", details.getRecipient());
 
-            javaMailSender.send(mailMessage);
+            CreateEmailResponse data = resend.emails().send(params);
 
-            log.info("Simple email sent successfully. sent to={}", details.getRecipient());
+            log.info("Simple email sent successfully via Resend. id={}, sent to={}", data.getId(), details.getRecipient());
         } catch (Exception e) {
-            log.error("Error while sending simple email. error={}", e.getMessage());
+            log.error("Error while sending simple email via Resend. error={}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    @Override
     public void sendMailWithAttachment(EmailDetails details) {
-
         log.info("Sending email with attachment started. sender={}", sender);
 
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper;
-
         try {
-
-            if (details.getAttachment().isBlank()) {
+            if (details.getAttachment() == null || details.getAttachment().isBlank()) {
                 log.warn("Attachment is missing while sending email with attachment");
-                throw new ResourceNotFoundException(
-                        "Attachment cannot be empty"
-                );
+                throw new ResourceNotFoundException("Attachment cannot be empty");
             }
 
-            helper = new MimeMessageHelper(mimeMessage, true);
+            File file = new File(details.getAttachment());
+            if (!file.exists()) {
+                throw new ResourceNotFoundException("Attachment file not found at path: " + details.getAttachment());
+            }
 
-            helper.setFrom(sender);
-            helper.setTo(details.getRecipient());
-            helper.setText(details.getMsgBody());
-            helper.setSubject(details.getSubject());
+            // Resend requires attachments to be Base64 encoded
+            byte[] fileContent = Files.readAllBytes(Paths.get(details.getAttachment()));
+            String encodedContent = Base64.getEncoder().encodeToString(fileContent);
 
-            FileSystemResource file =
-                    new FileSystemResource(
-                            new File(details.getAttachment())
-                    );
-            helper.addAttachment(
-                    file.getFilename(), file
-            );
+            Attachment attachment = Attachment.builder()
+                    .fileName(file.getName())
+                    .content(encodedContent)
+                    .build();
 
-            javaMailSender.send(mimeMessage);
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(sender)
+                    .to(details.getRecipient())
+                    .subject(details.getSubject())
+                    .text(details.getMsgBody())
+                    .attachments(Collections.singletonList(attachment))
+                    .build();
 
-            log.info("Email with attachment sent successfully. sent to={}", details.getRecipient());
+            CreateEmailResponse data = resend.emails().send(params);
+
+            log.info("Email with attachment sent successfully via Resend. id={}, sent to={}", data.getId(), details.getRecipient());
         } catch (Exception e) {
-            if (e instanceof MessagingException) {
-                log.error("Error while sending email with attachment. error={}", e.getMessage());
-            }
+            log.error("Error while sending email with attachment via Resend. error={}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    @Override
     public void sendHtmlMail(
             EmailDetails details,
             String htmlTemplte,
             Map<String, Object> variables
     ) {
-
         log.info("Sending email with html content. Sender={}", sender);
 
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper;
-
         try {
-
-            helper = new MimeMessageHelper(mimeMessage, true,"utf-8");
-
-            helper.setFrom(sender);
-            helper.setTo(details.getRecipient());
-            helper.setSubject(details.getSubject());
-
             Context context = new Context();
             context.setVariables(variables);
 
             String htmlContent = templateEngine.process(htmlTemplte, context);
 
-            helper.setText(htmlContent, true);
+            CreateEmailOptions.Builder paramsBuilder = CreateEmailOptions.builder()
+                    .from(sender)
+                    .to(details.getRecipient())
+                    .subject(details.getSubject())
+                    .html(htmlContent);
 
             if (details.getAttachment() != null && !details.getAttachment().isBlank()) {
-                FileSystemResource file = new FileSystemResource(new File(details.getAttachment()));
+                File file = new File(details.getAttachment());
 
                 if (file.exists()) {
-                    helper.addAttachment(file.getFilename(), file);
+                    byte[] fileContent = Files.readAllBytes(Paths.get(details.getAttachment()));
+                    String encodedContent = Base64.getEncoder().encodeToString(fileContent);
+
+                    Attachment attachment = Attachment.builder()
+                            .fileName(file.getName())
+                            .content(encodedContent)
+                            .build();
+
+                    paramsBuilder.attachments(Collections.singletonList(attachment));
                 } else {
                     log.warn("Attachment file not found at path: {}", details.getAttachment());
                 }
             }
 
-            javaMailSender.send(mimeMessage);
+            CreateEmailOptions params = paramsBuilder.build();
+            CreateEmailResponse data = resend.emails().send(params);
 
-            log.info("Email with html content sent successfully. sent to={}", details.getRecipient());
+            log.info("Email with html content sent successfully via Resend. id={}, sent to={}", data.getId(), details.getRecipient());
         } catch (Exception e) {
-            if (e instanceof MessagingException) {
-                log.error("Error sending email with html content. error={}", e.getMessage());
-            }
+            log.error("Error sending email with html content via Resend. error={}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
