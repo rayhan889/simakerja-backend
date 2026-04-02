@@ -17,6 +17,13 @@ public class StudentUpdateRequest {
     @NotBlank
     private String studyProgram;
 
+    @NotBlank
+    @Pattern(
+            regexp = "^(?:\\+62|62|0)8[1-9][0-9]{6,10}$",
+            message = "Invalid phone number"
+    )
+    private String phoneNumber;
+
     public StudentUpdateRequest() {
     }
 
@@ -34,5 +41,13 @@ public class StudentUpdateRequest {
 
     public void setStudyProgram(String studyProgram) {
         this.studyProgram = studyProgram;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

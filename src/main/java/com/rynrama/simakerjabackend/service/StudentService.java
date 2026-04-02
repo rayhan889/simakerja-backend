@@ -38,6 +38,7 @@ public class StudentService {
 
         student.setNim(request.getNim());
         student.setStudyProgram(request.getStudyProgram());
+        student.getUser().setPhoneNumber(request.getPhoneNumber());
 
         return student;
     }
